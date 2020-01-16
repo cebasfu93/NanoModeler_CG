@@ -5,7 +5,7 @@ class Input:
     core_radius, core_method, bead_radius, core_bmass, core_btype, core_en_k,
     lig1_n_per_bead, lig1_num, lig1_btypes, lig1_charges, lig1_masses,
     lig2_n_per_bead, lig2_num, lig2_btypes, lig2_charges, lig2_masses,
-    morph, rsd, stripes):
+    morph, rsd, stripes, parameter_file):
 
         self.bead_radius = bead_radius
 
@@ -30,10 +30,86 @@ class Input:
         self.morph = morph
         self.rsd = rsd
         self.stripes = stripes
-        self.lig1_bond_k=5000
-        self.lig1_angle_k=25
-        self.lig2_bond_k=5000
-        self.lig2_angle_k=25
+        self.parameter_file = parameter_file
+
+class Bond:
+    def __init__(self, atype1, atype2, func, b0, kb):
+        self.atype1 = atype1
+        self.atype2 = atype2
+        self.func = func
+        self.b0 = b0
+        self.kb = kb
+
+class Angle:
+    def __init__(self, atype1, atype2, atype3, func, th0, cth):
+        self.atype1 = atype1
+        self.atype2 = atype2
+        self.atype3 = atype3
+        self.func = func
+        self.th0 = th0
+        self.cth = cth
+
+class Parameters:
+    def __init__(self, parameter_file):
+        fl = parameter_file.readlines()
+
+        bondtypes_section = False
+        bond_info = []
+        for line in fl:
+            if bondtypes_section == True:
+                if ("[ " in line) and (" ]" in line):
+                    break
+                if ";"!=line[0] and line!="\n":
+                    bond_info.append(line.split())
+            if "[ bondtypes ]" in line:
+                bondtypes_section = True
+        bonds = {"{}-{}".format(bond[0], bond[1]) : [bond[2], bond[3], bond[4]] for bond in bond_info}
+        bonds2 = {"{}-{}".format(bond[1], bond[0]) : [bond[2], bond[3], bond[4]] for bond in bond_info}
+        self.bondtypes = {**bonds, **bonds2}
+
+        angletypes_section = False
+        angle_info = []
+        for line in fl:
+            if angletypes_section == True:
+                if ("[ " in line) and (" ]" in line):
+                    break
+                if ";"!=line[0] and line!="\n":
+                    angle_info.append(line.split())
+            if "[ angletypes ]" in line:
+                angletypes_section = True
+        angles = {"{}-{}-{}".format(angle[0], angle[1], angle[2]) : [angle[3], angle[4], angle[5]] for angle in angle_info}
+        angles2 = {"{}-{}-{}".format(angle[2], angle[1], angle[0]) : [angle[3], angle[4], angle[5]] for angle in angle_info}
+        self.angletypes = {**angles, **angles2}
+
+    def check_missing_parameters(self, inp):
+        lig1_btypes_list = [inp.core_btype]
+        for i in range(len(inp.lig1_btypes)):
+            lig1_btypes_list += [inp.lig1_btypes[i]]*inp.lig1_n_per_bead[i]
+        bond_checks = ["{}-{}".format(a1, a2) in self.bondtypes.keys() for a1, a2 in zip(lig1_btypes_list[:-1], lig1_btypes_list[1:])]
+        if np.any(np.invert(bond_checks)):
+            no_params_ndx = np.where(np.invert(bond_checks))[0]
+            missing_pairs = ["{}-{}".format(lig1_btypes_list[ndx], lig1_btypes_list[ndx+1]) for ndx in no_params_ndx]
+            raise Exception("Missing parameters for bonds: {}".format(missing_pairs))
+        angle_checks = ["{}-{}-{}".format(a1, a2, a3) in self.angletypes.keys() for a1, a2, a3 in zip(lig1_btypes_list[:-2], lig1_btypes_list[1:-1], lig1_btypes_list[2:])]
+        if np.any(np.invert(angle_checks)):
+            no_params_ndx = np.where(np.invert(angle_checks))[0]
+            missing_pairs = ["{}-{}-{}".format(lig1_btypes_list[ndx], lig1_btypes_list[ndx+1], lig1_btypes_list[ndx+2]) for ndx in no_params_ndx]
+            raise Exception("Missing parameters for angles: {}".format(missing_pairs))
+
+        if lig2_num > 0:
+            lig2_btypes_list = [inp.core_btype]
+            for i in range(len(inp.lig2_btypes)):
+                lig2_btypes_list += [inp.lig2_btypes[i]]*inp.lig2_n_per_bead[i]
+            bond_checks = ["{}-{}".format(a1, a2) in self.bondtypes.keys() for a1, a2 in zip(lig2_btypes_list[:-1], lig2_btypes_list[1:])]
+            if np.any(np.invert(bond_checks)):
+                no_params_ndx = np.where(np.invert(bond_checks))[0]
+                missing_pairs = ["{}-{}".format(lig2_btypes_list[ndx], lig2_btypes_list[ndx+1]) for ndx in no_params_ndx]
+                raise Exception("Missing parameters for bonds: {}".format(missing_pairs))
+            angle_checks = ["{}-{}-{}".format(a1, a2, a3) in self.angletypes.keys() for a1, a2, a3 in zip(lig2_btypes_list[:-2], lig2_btypes_list[1:-1], lig2_btypes_list[2:])]
+            if np.any(np.invert(angle_checks)):
+                no_params_ndx = np.where(np.invert(angle_checks))[0]
+                missing_pairs = ["{}-{}-{}".format(lig2_btypes_list[ndx], lig2_btypes_list[ndx+1], lig2_btypes_list[ndx+2]) for ndx in no_params_ndx]
+                raise Exception("Missing parameters for angles: {}".format(missing_pairs))
 
 def center(objeto):
     COM = np.average(objeto, axis=0)
