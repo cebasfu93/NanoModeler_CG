@@ -63,8 +63,8 @@ class Parameters:
                     bond_info.append(line.split())
             if "[ bondtypes ]" in line:
                 bondtypes_section = True
-        bonds = {"{}-{}".format(bond[0], bond[1]) : [bond[2], bond[3], bond[4]] for bond in bond_info}
-        bonds2 = {"{}-{}".format(bond[1], bond[0]) : [bond[2], bond[3], bond[4]] for bond in bond_info}
+        bonds = {"{}-{}".format(bond[0], bond[1]) : [int(bond[2]), float(bond[3]), float(bond[4])] for bond in bond_info}
+        bonds2 = {"{}-{}".format(bond[1], bond[0]) : [int(bond[2]), float(bond[3]), float(bond[4])] for bond in bond_info}
         self.bondtypes = {**bonds, **bonds2}
 
         angletypes_section = False
@@ -77,8 +77,8 @@ class Parameters:
                     angle_info.append(line.split())
             if "[ angletypes ]" in line:
                 angletypes_section = True
-        angles = {"{}-{}-{}".format(angle[0], angle[1], angle[2]) : [angle[3], angle[4], angle[5]] for angle in angle_info}
-        angles2 = {"{}-{}-{}".format(angle[2], angle[1], angle[0]) : [angle[3], angle[4], angle[5]] for angle in angle_info}
+        angles = {"{}-{}-{}".format(angle[0], angle[1], angle[2]) : [int(angle[3]), float(angle[4]), float(angle[5])] for angle in angle_info}
+        angles2 = {"{}-{}-{}".format(angle[2], angle[1], angle[0]) : [int(angle[3]), float(angle[4]), float(angle[5])] for angle in angle_info}
         self.angletypes = {**angles, **angles2}
 
     def check_missing_parameters(self, inp):
@@ -96,7 +96,7 @@ class Parameters:
             missing_pairs = ["{}-{}-{}".format(lig1_btypes_list[ndx], lig1_btypes_list[ndx+1], lig1_btypes_list[ndx+2]) for ndx in no_params_ndx]
             raise Exception("Missing parameters for angles: {}".format(missing_pairs))
 
-        if lig2_num > 0:
+        if inp.lig2_num > 0:
             lig2_btypes_list = [inp.core_btype]
             for i in range(len(inp.lig2_btypes)):
                 lig2_btypes_list += [inp.lig2_btypes[i]]*inp.lig2_n_per_bead[i]
