@@ -75,15 +75,21 @@ def grow_ligands(staples_xyz, lig_ndx, inp):
     lig1_xyz, lig2_xyz = [], []
 
     for ndx in lig_ndx[0]:
+        dist_units = 0
         for i in range(len(inp.lig1_btypes)):
-            norma = np.linalg.norm(staples_xyz[ndx])
-            xyz = staples_xyz[ndx]*(norma+2*i*inp.bead_radius)/norma
-            lig1_xyz.append(xyz)
+            for n_per_bead in range(inp.lig1_n_per_bead[i]):
+                norma = np.linalg.norm(staples_xyz[ndx])
+                xyz = staples_xyz[ndx]*(norma+2*dist_units*inp.bead_radius)/norma
+                lig1_xyz.append(xyz)
+                dist_units += 1
 
     for ndx in lig_ndx[1]:
+        dist_units = 0
         for i in range(len(inp.lig2_btypes)):
-            norma = np.linalg.norm(staples_xyz[ndx])
-            xyz = staples_xyz[ndx]*(norma+2*i*inp.bead_radius)/norma
-            lig2_xyz.append(xyz)
+            for n_per_bead in range(inp.lig2_n_per_bead[i]):
+                norma = np.linalg.norm(staples_xyz[ndx])
+                xyz = staples_xyz[ndx]*(norma+2*dist_units*inp.bead_radius)/norma
+                lig2_xyz.append(xyz)
+                dist_units += 1
 
     return (lig1_xyz, lig2_xyz)
