@@ -1,0 +1,11 @@
+[ bondtypes ]
+; i   j   func    b0    kb
+  C1  C1    1    0.52   5000
+  C1  Qda   1    0.52   5000
+  Qda Qda   1    0.52   5000
+
+[ angletypes ]
+; i   j   k   func    th0   cth
+  C1  C1  Qda   1     180   25
+  C1  C1  C1    1     180   25
+  C1  Qda Qda   1     180   25
