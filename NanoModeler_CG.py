@@ -104,6 +104,7 @@ def NanoModeler_CG(BEAD_RADIUS=0.26,
     print(len(core_xyz))
     inp.char_radius = np.max(np.linalg.norm(core_xyz, axis=1))
     inp.calculate_volume()
+    inp.core_bmass = inp.core_density*inp.vol*602.214/len(core_xyz) #g nm-3 to u.m.a bead-1
 
     #######LIGANDS#######
     staples_xyz, staples_normals = place_staples(core_xyz, inp)
@@ -120,7 +121,7 @@ def NanoModeler_CG(BEAD_RADIUS=0.26,
         core_bonds = get_core_bonds(core_xyz, inp)
         lig_bonds = get_lig_bonds(np_xyz, inp)
         lig_angles = get_lig_angles(np_xyz, inp)
-        top_writer(TMP, np_xyz, lig_bonds, lig_angles, core_bmass, inp, params)
+        top_writer(TMP, np_xyz, lig_bonds, lig_angles, inp, params)
     else:
         print("Parameter file not found. Only writing nanoparticle structure.")
 
@@ -145,10 +146,10 @@ if __name__ == "__main__":
     CORE_EN_K=5000,
 
     LIG1_NUM=8,
-    LIG1_N_PER_BEAD=[3,2],
-    LIG1_BTYPES=["C1", "Qda"],
-    LIG1_CHARGES=[0,1],
-    LIG1_MASSES=[72,72],
+    LIG1_N_PER_BEAD=[1,3,1],
+    LIG1_BTYPES=["C1", "EO", "SP2"],
+    LIG1_CHARGES=[0,0,0],
+    LIG1_MASSES=[56,44,31],
 
     LIG2_NUM=0,
     LIG2_N_PER_BEAD=[],
@@ -160,4 +161,4 @@ if __name__ == "__main__":
     RSEED=2,# None
     STRIPES=4,
 
-    PARAMETER_FILE=None)#open('PEG.itp', 'r'))
+    PARAMETER_FILE=open('PEG.itp', 'r'))

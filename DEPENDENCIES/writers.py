@@ -32,7 +32,7 @@ def gro_writer(TMP, np_xyz, inp):
     f.write("{:>10.5f} {:>10.5f} {:>10.5f}".format(10,10,10))
     f.close()
 
-def top_writer(TMP, np_xyz, lig_bonds, lig_angles, core_bmass, inp, params):
+def top_writer(TMP, np_xyz, lig_bonds, lig_angles, inp, params):
     n_at1 = np.sum(inp.lig1_n_per_bead)
     n_at2 = np.sum(inp.lig2_n_per_bead)
     n_core = int(len(np_xyz) - inp.lig1_num*n_at1 - inp.lig2_num*n_at2)
@@ -60,7 +60,7 @@ def top_writer(TMP, np_xyz, lig_bonds, lig_angles, core_bmass, inp, params):
     for i in range(n_core):
         res = 1
         at = i + 1
-        f.write("{:>6d} {:>4} {:>5} {:>5} {:>5} {:>5} {:>12.6f}    {:<9.5f} ; qtot {:>6.3f}\n".format(at, inp.core_btype, res, "CORE", "MM", at, 0.0, core_bmass, 0.0))
+        f.write("{:>6d} {:>4} {:>5} {:>5} {:>5} {:>5} {:>12.6f}    {:<9.5f} ; qtot {:>6.3f}\n".format(at, inp.core_btype, res, "CORE", "MM", at, 0.0, inp.core_bmass, 0.0))
     q_tot = 0
     for i in range(inp.lig1_num):
         res = i + 1

@@ -69,6 +69,7 @@ class Input:
             self.n_coord = 12
 
         self.vol = None
+        self.core_bmass = None
 
     def calculate_volume(self):
         if self.core_shape == "sphere" or self.core_shape == "shell":
