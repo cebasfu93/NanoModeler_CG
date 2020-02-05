@@ -3,8 +3,9 @@ import numpy as np
 class Input:
     def __init__(self,
     bead_radius, core_radius, core_method, core_density, core_shape, core_cylinder, core_ellipse_axis, core_rect_prism, core_rod_params, core_pyramid, core_octahedron, core_btype, core_en, core_en_k,
-    lig1_num, lig1_n_per_bead, lig1_btypes, lig1_charges, lig1_masses,
-    lig2_num, lig2_n_per_bead, lig2_btypes, lig2_charges, lig2_masses,
+    graft_density,
+    lig1_n_per_bead, lig1_btypes, lig1_charges, lig1_masses,
+    lig2_n_per_bead, lig2_btypes, lig2_charges, lig2_masses,
     morph, rsd, stripes,
     parameter_file):
 
@@ -24,13 +25,15 @@ class Input:
         self.core_en = core_en
         self.core_en_k = core_en_k
 
-        self.lig1_num = lig1_num
+        self.graft_density = graft_density
+
+        #self.lig1_num = lig1_num
         self.lig1_n_per_bead = lig1_n_per_bead
         self.lig1_btypes = lig1_btypes
         self.lig1_charges = lig1_charges
         self.lig1_masses = lig1_masses
 
-        self.lig2_num = lig2_num
+        #self.lig2_num = lig2_num
         self.lig2_n_per_bead = lig2_n_per_bead
         self.lig2_btypes = lig2_btypes
         self.lig2_charges = lig2_charges
@@ -70,6 +73,26 @@ class Input:
 
         self.vol = None
         self.core_bmass = None
+
+    def calculate_area(self):
+        if self.core_shape == "sphere" or self.core_shape == "shell":
+            area = 4.*np.pi*self.core_radius**2
+        elif self.core_shape == "ellipsoid":
+            axa, axb, axc = self.core_ellipse_axis
+            area = 4*np.pi*(((axa*axb)**1.6 + (axa*axc)**1.6 + (axb*axc)**1.6)/3)**1.6
+        elif self.core_shape == "cylinder":
+            area = 2*np.pi*self.core_cylinder[0]*(self.core_cylinder[0]+ self.core_cylinder[1])
+        elif self.core_shape == "rectangular prism":
+            axa, axb, axc = self.rectangular_prism
+            area = 2*(axa*axb + axa*axc + axb*axc)
+        elif self.core_shape == "rod":
+            area = 2*np.pi*self.core_rod_params[0]*(2*self.core_rod_params[0] + self.core_rod_params[1])
+        elif self.core_shape == "pyramid":
+            s = np.sqrt(self.core_pyramid[0]**2/4+self.core_pyramid[1]**2)
+            area =  self.core_pyramid[0]**2 + 2*s*self.core_pyramid[1]
+        elif self.core_shape == "octahedron":
+            area = 2*np.sqrt(3)*self.core_octahedron**2
+        self.area = area
 
     def calculate_volume(self):
         if self.core_shape == "sphere" or self.core_shape == "shell":
