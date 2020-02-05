@@ -4,7 +4,7 @@ class Input:
     def __init__(self,
     bead_radius, core_radius, core_method, core_density, core_shape, core_cylinder, core_ellipse_axis, core_rect_prism, core_rod_params, core_pyramid, core_octahedron, core_btype, core_en, core_en_k,
     graft_density,
-    lig1_n_per_bead, lig1_btypes, lig1_charges, lig1_masses,
+    lig1_n_per_bead, lig1_btypes, lig1_charges, lig1_masses, lig1_frac,
     lig2_n_per_bead, lig2_btypes, lig2_charges, lig2_masses,
     morph, rsd, stripes,
     parameter_file):
@@ -27,13 +27,12 @@ class Input:
 
         self.graft_density = graft_density
 
-        #self.lig1_num = lig1_num
         self.lig1_n_per_bead = lig1_n_per_bead
         self.lig1_btypes = lig1_btypes
         self.lig1_charges = lig1_charges
         self.lig1_masses = lig1_masses
+        self.lig1_frac = lig1_frac
 
-        #self.lig2_num = lig2_num
         self.lig2_n_per_bead = lig2_n_per_bead
         self.lig2_btypes = lig2_btypes
         self.lig2_charges = lig2_charges
@@ -73,6 +72,10 @@ class Input:
 
         self.vol = None
         self.core_bmass = None
+        self.area = None
+        self.n_tot_lig = None
+        self.lig1_num = None
+        self.lig2_num = None
 
     def calculate_area(self):
         if self.core_shape == "sphere" or self.core_shape == "shell":
@@ -92,7 +95,7 @@ class Input:
             area =  self.core_pyramid[0]**2 + 2*s*self.core_pyramid[1]
         elif self.core_shape == "octahedron":
             area = 2*np.sqrt(3)*self.core_octahedron**2
-        self.area = area
+        return area
 
     def calculate_volume(self):
         if self.core_shape == "sphere" or self.core_shape == "shell":
@@ -109,7 +112,17 @@ class Input:
             volume = self.core_pyramid[0]**2*self.core_pyramid[1]/3
         elif self.core_shape == "octahedron":
             volume = np.sqrt(2)/3*self.core_octahedron**3
-        self.vol = volume
+        return volume
+
+    def characterize_core(self, core_xyz):
+        self.char_radius = np.max(np.linalg.norm(core_xyz, axis=1))
+        self.vol = self.calculate_volume()
+        self.core_bmass = self.core_density*self.vol*602.214/len(core_xyz) #g nm-3 to u.m.a bead-1
+        self.area = self.calculate_area()
+        self.n_tot_lig = int(self.graft_density * self.area)
+        print(self.area, self.n_tot_lig)
+        self.lig1_num = int(self.n_tot_lig * self.lig1_frac)
+        self.lig2_num = self.n_tot_lig - self.lig1_num
 
 class Bond:
     def __init__(self, atype1, atype2, func, b0, kb):
