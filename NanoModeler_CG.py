@@ -35,9 +35,9 @@ def NanoModeler_CG(BEAD_RADIUS=0.26,
     import numpy as np
     from  scipy.spatial.distance import cdist
     from scipy.optimize import minimize
-    from DEPENDENCIES.Extras import Input, Parameters, center, cartesian_to_polar, polar_to_cartesian, sunflower_pts, merge_coordinates, calculate_volume
-    from DEPENDENCIES.spatial_distributions import primitive, bcc, fcc, hcp, hollow_sphere
-    from DEPENDENCIES.core_maker import sphere, ellipsoid, cylinder, rectangular_prism, rod, pyramid, gkeka_method, shell, octahedron
+    from DEPENDENCIES.Extras import Input, Parameters, center, cartesian_to_polar, polar_to_cartesian, sunflower_pts, merge_coordinates
+    from DEPENDENCIES.spatial_distributions import primitive, bcc, fcc, hcp, shell
+    from DEPENDENCIES.core_maker import sphere, ellipsoid, cylinder, rectangular_prism, rod, pyramid, octahedron
     from DEPENDENCIES.coat_maker import place_staples, assign_morphology, grow_ligands
     from DEPENDENCIES.top_maker import get_core_bonds, get_lig_bonds, get_lig_angles
     from DEPENDENCIES.writers import gro_writer, top_writer
@@ -84,7 +84,7 @@ def NanoModeler_CG(BEAD_RADIUS=0.26,
     'bcc': bcc,
     'fcc': fcc,
     'hcp': hcp,
-    'hollow': hollow_sphere
+    'shell': shell
     }
     core_shape_functions = {'sphere': sphere,
     'ellipsoid': ellipsoid,
@@ -92,19 +92,23 @@ def NanoModeler_CG(BEAD_RADIUS=0.26,
     'rectangular prism': rectangular_prism,
     'rod': rod,
     'pyramid' : pyramid,
-    'shell' : shell,
     'octahedron' : octahedron
     }
 
     #######CORE#######
     packed_block = core_packing_functions[inp.core_method](inp)
-    core_xyz = core_shape_functions[inp.core_shape](packed_block, inp)
+    if inp.core_shape != 'shape':
+        core_xyz = core_shape_functions[inp.core_shape](packed_block, inp)
+    else:
+        core_xyz = packed_block*1
+    print(len(core_xyz))
     inp.char_radius = np.max(np.linalg.norm(core_xyz, axis=1))
+    inp.calculate_volume()
 
     #######LIGANDS#######
-    staples_xyz = place_staples(core_xyz, inp)
+    staples_xyz, staples_normals = place_staples(core_xyz, inp)
     lig_ndx = assign_morphology(staples_xyz, inp)
-    lig_xyz = grow_ligands(staples_xyz, lig_ndx, inp)
+    lig_xyz = grow_ligands(staples_xyz, staples_normals, lig_ndx, inp)
     np_xyz = merge_coordinates(core_xyz, lig_xyz)
 
     gro_writer(TMP, np_xyz, inp)
@@ -140,13 +144,13 @@ if __name__ == "__main__":
     CORE_EN=False,
     CORE_EN_K=5000,
 
-    LIG1_NUM=20,
+    LIG1_NUM=8,
     LIG1_N_PER_BEAD=[3,2],
     LIG1_BTYPES=["C1", "Qda"],
     LIG1_CHARGES=[0,1],
     LIG1_MASSES=[72,72],
 
-    LIG2_NUM=133,
+    LIG2_NUM=0,
     LIG2_N_PER_BEAD=[],
     LIG2_BTYPES=[],
     LIG2_CHARGES=[],
@@ -156,4 +160,4 @@ if __name__ == "__main__":
     RSEED=2,# None
     STRIPES=4,
 
-    PARAMETER_FILE=open('PEG.itp', 'r'))
+    PARAMETER_FILE=None)#open('PEG.itp', 'r'))

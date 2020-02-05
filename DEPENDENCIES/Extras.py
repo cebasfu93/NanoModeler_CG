@@ -5,7 +5,8 @@ class Input:
     bead_radius, core_radius, core_method, core_density, core_shape, core_cylinder, core_ellipse_axis, core_rect_prism, core_rod_params, core_pyramid, core_octahedron, core_btype, core_en, core_en_k,
     lig1_num, lig1_n_per_bead, lig1_btypes, lig1_charges, lig1_masses,
     lig2_num, lig2_n_per_bead, lig2_btypes, lig2_charges, lig2_masses,
-    morph, lig_num_tot, rsd, stripes):
+    morph, rsd, stripes,
+    parameter_file):
 
         self.bead_radius = bead_radius
 
@@ -30,6 +31,7 @@ class Input:
         self.lig1_masses = lig1_masses
 
         self.lig2_num = lig2_num
+        self.lig2_n_per_bead = lig2_n_per_bead
         self.lig2_btypes = lig2_btypes
         self.lig2_charges = lig2_charges
         self.lig2_masses = lig2_masses
@@ -41,6 +43,8 @@ class Input:
             #self.lig_num_tot = self.lig1_num + self.lig2_num
         self.rsd = rsd
         self.stripes = stripes
+
+        self.parameter_file = parameter_file
 
         if core_shape == "sphere" or core_shape == "shell":
             self.char_radius = self.core_radius
@@ -63,6 +67,25 @@ class Input:
             self.n_coord = 8
         elif core_method == "fcc" or core_method == "hcp":
             self.n_coord = 12
+
+        self.vol = None
+
+    def calculate_volume(self):
+        if self.core_shape == "sphere" or self.core_shape == "shell":
+            volume = 4./3*np.pi*self.core_radius**3
+        elif self.core_shape == "ellipsoid":
+            volume = 4./3*np.pi*np.prod(self.core_ellipse_axis)
+        elif self.core_shape == "cylinder":
+            volume = np.pi*self.core_cylinder[0]**2*self.core_cylinder[1]
+        elif self.core_shape == "rectangular prism":
+            volume = np.prod(self.rectangular_prism)
+        elif self.core_shape == "rod":
+            volume = np.pi*self.core_rod_params[0]**2*self.core_rod_params[1] + 4./3*np.pi*self.core_rod_params[1]**3
+        elif self.core_shape == "pyramid":
+            volume = self.core_pyramid[0]**2*self.core_pyramid[1]/3
+        elif self.core_shape == "octahedron":
+            volume = np.sqrt(2)/3*self.core_octahedron**3
+        self.vol = volume
 
 class Bond:
     def __init__(self, atype1, atype2, func, b0, kb):
@@ -187,20 +210,3 @@ def merge_coordinates(core_xyz, lig_xyz):
     else:
         np_xyz = np.vstack((core_xyz, lig_xyz[0]))
     return np_xyz
-
-def calculate_volume(inp):
-    if inp.core_shape == "sphere" or inp.core_shape == "shell":
-        volume = 4./3*np.pi*inp.core_radius**3
-    elif inp.core_shape == "ellipsoid":
-        volume = 4./3*np.pi*np.prod(inp.core_ellipse_axis)
-    elif inp.core_shape == "cylinder":
-        volume = np.pi*inp.core_cylinder[0]**2*inp.core_cylinder[1]
-    elif inp.core_shape == "rectangular prism":
-        volume = np.prod(inp.rectangular_prism)
-    elif inp.core_shape == "rod":
-        volume = np.pi*inp.core_rod_params[0]**2*inp.core_rod_params[1] + 4./3*np.pi*inp.core_rod_params[1]**3
-    elif inp.core_shape == "pyramid":
-        volume = inp.core_pyramid[0]**2*inp.core_pyramid[1]/3
-    elif inp.core_shape == "octahedron":
-        volume = np.sqrt(2)/3*inp.core_octahedron**3
-    return volume

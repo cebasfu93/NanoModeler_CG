@@ -85,19 +85,19 @@ def get_lig_angles(np_xyz, inp):
                 lig1_angles.append(angle)
 
     if n_at2 >= 2:
-    for i in range(inp.lig2_num):
-        ndx0 = n_core + n_at1*inp.lig1_num + i*n_at2
-        ndx1 = ndx0*1
-        ndx2 = ndx1 + 1
-        ndx3 = np.argsort(cdist([np_xyz[ndx1]], core_xyz))[0,0]
-
-        angle = [ndx3, ndx1, ndx2]
-        lig2_angles.append(angle)
-        for j in range(1, n_at2-1):
-            ndx1 = ndx0 + j
+        for i in range(inp.lig2_num):
+            ndx0 = n_core + n_at1*inp.lig1_num + i*n_at2
+            ndx1 = ndx0*1
             ndx2 = ndx1 + 1
-            ndx3 = ndx1 - 1
+            ndx3 = np.argsort(cdist([np_xyz[ndx1]], core_xyz))[0,0]
+
             angle = [ndx3, ndx1, ndx2]
             lig2_angles.append(angle)
+            for j in range(1, n_at2-1):
+                ndx1 = ndx0 + j
+                ndx2 = ndx1 + 1
+                ndx3 = ndx1 - 1
+                angle = [ndx3, ndx1, ndx2]
+                lig2_angles.append(angle)
 
     return (lig1_angles, lig2_angles)

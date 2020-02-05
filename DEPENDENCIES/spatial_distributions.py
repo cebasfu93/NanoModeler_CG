@@ -92,3 +92,50 @@ def hcp(inp):
     ndx_near = np.argmin(np.linalg.norm(xyz, axis=1))
     xyz = xyz - xyz[ndx_near,:]
     return xyz
+
+def gkeka_method(a, inp):
+    rft = []
+    N_count = 0
+    d = np.sqrt(a)
+    M_t = int(np.round(np.pi/d))
+    d_t = np.pi/M_t
+    d_f = a/d_t
+    for m in range(M_t):
+        t = np.pi*(m+0.5)/M_t
+        M_f = int(np.round(2*np.pi*np.sin(t)/d_f))
+        for n in range(M_f):
+            f = 2*np.pi*n/M_f
+            rft.append([inp.core_radius, f, t])
+            N_count += 1
+
+    rft = np.array(rft)
+    gkeka_sphere = polar_to_cartesian(rft)
+    return N_count, gkeka_sphere
+
+def shell(block, inp):
+    ens, diffs = [], []
+    a_ini = inp.bead_radius**2
+    if inp.core_radius >= 0.8 and inp.core_radius <= 1.5:
+        trial_areas = np.linspace(a_ini, 10*a_ini, 300)
+    elif inp.core_radius > 1.5:
+        trial_areas = np.linspace(a_ini/(inp.core_radius**2), a_ini*(inp.core_radius**2), 300)
+    else:
+        print("Unsupported combination of build-mode and nanoparticle radius")
+
+    diff = 1
+
+    for area in trial_areas:
+        en, probe_sphere = gkeka_method(area, inp)
+        dists = cdist(probe_sphere, probe_sphere)
+        new_diff = np.abs(np.mean(np.sort(dists, axis=1)[:,1])-2*inp.bead_radius)
+        ens.append(en)
+        diffs.append(new_diff)
+        if new_diff < diff:
+            #print(en)
+            diff = new_diff
+            core = probe_sphere
+
+    diffs = np.array(diffs)
+    ens = np.array(ens)
+
+    return core

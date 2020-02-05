@@ -8,6 +8,7 @@ def gro_writer(TMP, np_xyz, inp):
 
     n_at1, n_at2 = np.sum(inp.lig1_n_per_bead), np.sum(inp.lig2_n_per_bead)
     n_core = int(len(np_xyz) - inp.lig1_num*n_at1 - inp.lig2_num*n_at2)
+    print(n_core)
     for i in range(n_core):
         res = 1
         ndx = i
