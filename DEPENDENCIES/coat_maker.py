@@ -33,10 +33,9 @@ def electric_minimization(xyz):
 
 def place_staples(core_xyz, inp):
     d_thres = 2*inp.bead_radius+0.01 #threshold to find neighbors to calculate normals to surface
-    n_tot_lig = inp.lig1_num + inp.lig2_num
 
-    virtual_xyz = sunflower_pts(n_tot_lig)*(inp.char_radius + 2*inp.bead_radius)
-    if n_tot_lig <= 20:
+    virtual_xyz = sunflower_pts(inp.n_tot_lig)*(inp.char_radius + 2*inp.bead_radius)
+    if inp.n_tot_lig <= 20:
         virtual_xyz = electric_minimization(virtual_xyz)
 
     if inp.core_shape != "shell":
@@ -45,13 +44,13 @@ def place_staples(core_xyz, inp):
     else:
         surface = np.ones(len(core_xyz), dtype='bool')
     print("Maximum allowed number of ligands: {}".format(np.sum(surface)))
-    if np.sum(surface) < n_tot_lig:
+    if np.sum(surface) < inp.n_tot_lig:
         raise ValueError("There are more ligands than surface core beads")
 
     core_vir_dists = cdist(cartesian_to_polar(virtual_xyz)[:,1:], cartesian_to_polar(core_xyz)[:,1:])
     core_vir_dists_sort = np.argsort(core_vir_dists, axis=1)
     close_ndxs = []
-    for i in range(n_tot_lig):
+    for i in range(inp.n_tot_lig):
         D = 0
         while len(close_ndxs) != i+1:
             test_ndx = core_vir_dists_sort[i,D]
@@ -62,8 +61,8 @@ def place_staples(core_xyz, inp):
             D += 1
     closests = core_xyz[close_ndxs]
 
-    normals = np.zeros((n_tot_lig, 3))
-    staples_xyz = np.empty((n_tot_lig, 3))
+    normals = np.zeros((inp.n_tot_lig, 3))
+    staples_xyz = np.empty((inp.n_tot_lig, 3))
     dists = cdist(closests, core_xyz)
     sort_dists = np.sort(dists, axis=1)
     for i, xyz in enumerate(closests):
@@ -81,8 +80,7 @@ def place_staples(core_xyz, inp):
     return staples_xyz, normals
 
 def assign_morphology(staples_xyz, inp):
-    n_tot_lig = inp.lig1_num + inp.lig2_num
-    indexes = list(range(n_tot_lig))
+    indexes = list(range(inp.n_tot_lig))
 
     if inp.morph == 'janus_x' or inp.morph == "stripe_x":
         ax = 0
@@ -101,7 +99,7 @@ def assign_morphology(staples_xyz, inp):
         dphi = (np.pi+0.00001)/inp.stripes
         lig1_ndx = []
         lig2_ndx = []
-        for i in range(n_tot_lig):
+        for i in range(inp.n_tot_lig):
             if phis[i]//dphi%2 == 0:
                 lig1_ndx.append(i)
             elif phis[i]//dphi%2 == 1:
