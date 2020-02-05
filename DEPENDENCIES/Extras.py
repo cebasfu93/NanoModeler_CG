@@ -180,7 +180,7 @@ class Parameters:
                 if ("[ " in line) and (" ]" in line):
                     break
                 if ";"!=line[0] and line!="\n":
-                    diheral_info.append(line.split())
+                    dihedral_info.append(line.split())
             if "[ dihedraltypes ]" in line:
                 dihedraltypes_section = True
         dihedrals = {"{}-{}-{}-{}".format(dihedral[0], dihedral[1], dihedral[2], dihedral[3]) : [int(dihedral[4]), float(dihedral[5]), float(dihedral[6])] for dihedral in dihedral_info}
@@ -200,33 +200,33 @@ class Parameters:
         angle_checks = ["{}-{}-{}".format(a1, a2, a3) in self.angletypes.keys() for a1, a2, a3 in zip(lig_btypes[:-2], lig_btypes[1:-1], lig_btypes[2:])]
         if np.any(np.invert(angle_checks)):
             no_params_ndx = np.where(np.invert(angle_checks))[0]
-            missing_pairs = ["{}-{}-{}".format(lig1_btypes_list[ndx], lig1_btypes_list[ndx+1], lig1_btypes_list[ndx+2]) for ndx in no_params_ndx]
+            missing_pairs = ["{}-{}-{}".format(lig_btypes[ndx], lig_btypes[ndx+1], lig_btypes[ndx+2]) for ndx in no_params_ndx]
             print("Missing parameters for angles: {}".format(missing_pairs))
 
     def check_dihedral_parameters(self, inp, lig1or2):
         lig_btypes = build_lig_btypes_list_n(inp, lig1or2)
         dihedral_checks = ["{}-{}-{}-{}".format(a1, a2, a3, a4) in self.dihedraltypes.keys() for a1, a2, a3, a4 in zip(lig_btypes[:-3], lig_btypes[1:-2], lig_btypes[2:-1], lig_btypes[3:])]
-        if np.any(np.invert(angle_checks)):
-            no_params_ndx = np.where(np.invert(angle_checks))[0]
-            missing_pairs = ["{}-{}-{}".format(lig_btypes_list[ndx], lig_btypes_list[ndx+1], lig_btypes_list[ndx+2]) for ndx in no_params_ndx]
+        if np.any(np.invert(dihedral_checks)):
+            no_params_ndx = np.where(np.invert(dihedral_checks))[0]
+            missing_pairs = ["{}-{}-{}-{}".format(lig_btypes[ndx], lig_btypes[ndx+1], lig_btypes[ndx+2], lig_btypes[ndx+3]) for ndx in no_params_ndx]
             print("Missing parameters for dihedral: {}".format(missing_pairs))
 
     def check_missing_parameters(self, inp):
         n_at1 = np.sum(inp.lig1_n_per_bead)
         n_at2 = np.sum(inp.lig2_n_per_bead)
 
-        check_bond_parameters(inp, "1")
+        self.check_bond_parameters(inp, "1")
         if n_at1 > 2:
-            check_angle_parameters(inp, "1")
+            self.check_angle_parameters(inp, "1")
         if n_at1 > 3:
-            check_dihedral_parameters(inp, "1")
+            self.check_dihedral_parameters(inp, "1")
 
         if inp.lig2_num > 0:
-            check_bond_parameters(inp, "2")
+            self.check_bond_parameters(inp, "2")
             if n_at2 > 2:
-                check_angle_parameters(inp, "2")
+                self.check_angle_parameters(inp, "2")
             if n_at2 > 3:
-                check_dihedral_parameters(inp, "2")
+                self.check_dihedral_parameters(inp, "2")
 
 def build_lig_btypes_list_n(inp, lig1or2):
     if lig1or2 == "1":
@@ -238,8 +238,7 @@ def build_lig_btypes_list_n(inp, lig1or2):
     lig_btypes_list = [inp.core_btype]
     for i in range(len(lig_btypes)):
         lig_btypes_list += [lig_btypes[i]]*lig_n_per_bead[i]
-    return lig_btypes
-
+    return lig_btypes_list
 
 def center(objeto):
     COM = np.average(objeto, axis=0)

@@ -144,7 +144,7 @@ if __name__ == "__main__":
     CORE_EN=False,
     CORE_EN_K=5000,
 
-    GRAFT_DENSITY=0.216, #nm2 thiol-1
+    GRAFT_DENSITY=0.152, #0.216nm2 thiol-1
 
     LIG1_N_PER_BEAD=[1,3,1],
     LIG1_BTYPES=["C1", "EO", "SP2"],
