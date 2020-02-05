@@ -2,35 +2,67 @@ import numpy as np
 
 class Input:
     def __init__(self,
-    core_radius, core_method, bead_radius, core_bmass, core_btype, core_en_k,
-    lig1_n_per_bead, lig1_num, lig1_btypes, lig1_charges, lig1_masses,
-    lig2_n_per_bead, lig2_num, lig2_btypes, lig2_charges, lig2_masses,
-    morph, rsd, stripes, parameter_file):
+    bead_radius, core_radius, core_method, core_density, core_shape, core_cylinder, core_ellipse_axis, core_rect_prism, core_rod_params, core_pyramid, core_octahedron, core_btype, core_en, core_en_k,
+    lig1_num, lig1_n_per_bead, lig1_btypes, lig1_charges, lig1_masses,
+    lig2_num, lig2_n_per_bead, lig2_btypes, lig2_charges, lig2_masses,
+    morph, lig_num_tot, rsd, stripes):
 
         self.bead_radius = bead_radius
 
         self.core_radius = core_radius
         self.core_method = core_method
-        self.core_bmass = core_bmass
+        self.core_density = core_density
+        self.core_shape = core_shape
+        self.core_cylinder = core_cylinder
+        self.core_ellipse_axis = core_ellipse_axis
+        self.core_rect_prism = core_rect_prism
+        self.core_rod_params = core_rod_params
+        self.core_pyramid = core_pyramid
+        self.core_octahedron = core_octahedron
         self.core_btype = core_btype
+        self.core_en = core_en
         self.core_en_k = core_en_k
-        self.lig1_num = lig1_num
-        self.lig2_num = lig2_num
 
+        self.lig1_num = lig1_num
         self.lig1_n_per_bead = lig1_n_per_bead
         self.lig1_btypes = lig1_btypes
         self.lig1_charges = lig1_charges
         self.lig1_masses = lig1_masses
 
-        self.lig2_n_per_bead = lig2_n_per_bead
+        self.lig2_num = lig2_num
         self.lig2_btypes = lig2_btypes
         self.lig2_charges = lig2_charges
         self.lig2_masses = lig2_masses
 
         self.morph = morph
+        #if "stripe" in self.morph:
+            #self.lig_num_tot = lig_num_tot
+        #else:
+            #self.lig_num_tot = self.lig1_num + self.lig2_num
         self.rsd = rsd
         self.stripes = stripes
-        self.parameter_file = parameter_file
+
+        if core_shape == "sphere" or core_shape == "shell":
+            self.char_radius = self.core_radius
+        elif core_shape == "ellipsoid":
+            self.char_radius = np.max(self.core_ellipse_axis)
+        elif core_shape == "cylinder":
+            self.char_radius = np.max([self.core_cylinder[0], self.core_cylinder[1]/2])
+        elif core_shape == "rectangular prism":
+            self.char_radius = np.max(self.core_rect_prism)/2
+        elif core_shape == "rod":
+            self.char_radius = self.core_rod_params[1]/2 + self.core_rod_params[0]
+        elif core_shape == "pyramid":
+            self.char_radius = np.max([np.sqrt(2)*self.core_pyramid[0]/2, self.core_pyramid[1]/2])
+        elif core_shape == "octahedron":
+            self.char_radius = self.core_octahedron/2
+
+        if core_method == "primitive":
+            self.n_coord = 6
+        elif core_method == "bcc":
+            self.n_coord = 8
+        elif core_method == "fcc" or core_method == "hcp":
+            self.n_coord = 12
 
 class Bond:
     def __init__(self, atype1, atype2, func, b0, kb):
@@ -111,11 +143,18 @@ class Parameters:
                 missing_pairs = ["{}-{}-{}".format(lig2_btypes_list[ndx], lig2_btypes_list[ndx+1], lig2_btypes_list[ndx+2]) for ndx in no_params_ndx]
                 raise Exception("Missing parameters for angles: {}".format(missing_pairs))
 
+
 def center(objeto):
     COM = np.average(objeto, axis=0)
     for i in range(len(objeto)):
         objeto[i,:] = objeto[i,:] - COM
     return objeto
+
+def hcp_xyz(h,k,l):
+    x = 2*h+(k+l)%2
+    y = np.sqrt(3)*(k+l%2/3)
+    z = 2*np.sqrt(6)/3*l
+    return [x, y, z]
 
 def sunflower_pts(num_pts):
     indices = np.arange(0, num_pts, dtype=float) + 0.5

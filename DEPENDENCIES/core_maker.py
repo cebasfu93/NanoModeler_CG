@@ -1,119 +1,106 @@
 import numpy as np
 from  scipy.spatial.distance import cdist
 
-from DEPENDENCIES.Extras import center, cartesian_to_polar, polar_to_cartesian, sunflower_pts
+from DEPENDENCIES.Extras import polar_to_cartesian
 
-def primitive_sphere(inp):
-    const = inp.bead_radius*2
-    cells_per_side = int((((2*inp.core_radius)//const)+1)//2*2+1)
-    N_unit_cells = cells_per_side**3
-    prim_block = np.array([])
+def sphere(block, inp):
+    core = block[np.linalg.norm(block, axis=1)<= inp.core_radius]
+    core = core - np.mean(core, axis=0)
+    return core
 
-    for i in range(cells_per_side):
-        for j in range(cells_per_side):
-            for k in range(cells_per_side):
+def ellipsoid(block, inp):
+    condition = (block[:,0]**2/inp.core_ellipse_axis[0]**2 + block[:,1]**2/inp.core_ellipse_axis[1]**2 + block[:,2]**2/inp.core_ellipse_axis[2]**2) <= 1.0
+    core = block[condition]
+    core = core - np.mean(core, axis=0)
+    return core
 
-                prim_block = np.append(prim_block, [i,j,k,i+1,j,k,i,j+1,k,i,j,k+1,i+1,j+1,k,i+1,j,k+1,i,j+1,k+1,i+1,j+1,k+1])
+def rectangular_prism(block, inp):
+    condition_x = np.logical_and(block[:,0] >= -1*inp.core_rect_prism[0]/2, block[:,0] <= inp.core_rect_prism[0]/2)
+    condition_y = np.logical_and(block[:,1] >= -1*inp.core_rect_prism[1]/2, block[:,1] <= inp.core_rect_prism[1]/2)
+    condition_z = np.logical_and(block[:,2] >= -1*inp.core_rect_prism[2]/2, block[:,2] <= inp.core_rect_prism[2]/2)
+    core = block[np.logical_and(condition_x, np.logical_and(condition_y, condition_z))]
+    core = core - np.mean(core, axis=0)
+    return core
 
-    prim_block = prim_block * const
-    prim_block = prim_block.reshape((len(prim_block)//3,3))
-    prim_block = np.unique(prim_block, axis=0)
-    prim_block = center(prim_block)
+def cylinder(block, inp):
+    condition_z = np.logical_and(block[:,2] <= inp.core_cylinder[1]/2, block[:,2] >= -inp.core_cylinder[1]/2)
+    condition_circle = np.linalg.norm(block[:,0:2], axis=1) <= inp.core_cylinder[0]
 
-    prim_sphere = prim_block[np.linalg.norm(prim_block, axis=1)<= inp.core_radius]
+    core = block[np.logical_and(condition_z, condition_circle)]
+    core = core - np.mean(core, axis=0)
+    return core
 
-    return prim_sphere
+def rod(block, inp):
+    condition_circle = np.linalg.norm(block[:,0:2], axis=1) <= inp.core_rod_params[0]
+    condition_length = np.logical_and(block[:,2]<=inp.core_rod_params[1]/2, block[:,2]>= -1*inp.core_rod_params[1]/2)
+    condition_cylinder = np.logical_and(condition_circle, condition_length)
+    shift_z = block*1
+    shift_z[:,2] = shift_z[:,2] - inp.core_rod_params[1]/2
+    condition_cap1 = np.linalg.norm(shift_z, axis=1) <= inp.core_rod_params[0]
+    shift_z = block*1
+    shift_z[:,2] = shift_z[:,2] + inp.core_rod_params[1]/2
+    condition_cap2 = np.linalg.norm(shift_z, axis=1) <= inp.core_rod_params[0]
 
-def bcc_sphere(inp):
-    const = inp.bead_radius*4/np.sqrt(3)
-    cells_per_side = int((((2*inp.core_radius)//const)+1)//2*2+1)
-    N_unit_cells = cells_per_side**3
-    bcc_block = np.array([])
+    core = block[np.logical_or(condition_cylinder, np.logical_or(condition_cap1, condition_cap2))]
+    core = core - np.mean(core, axis=0)
+    return core
 
-    for i in range(cells_per_side):
-        for j in range(cells_per_side):
-            for k in range(cells_per_side):
+def pyramid(block, inp):
+    condition_base = block[:,0] >= -1*inp.core_pyramid[1]/2
+    a = inp.core_pyramid[0]*1
+    L = inp.core_pyramid[1]*1
+    tip = np.array([L/2,0,0])
+    base_pts = np.array([[-L/2,a,0],[-L/2,0,a],[-L/2,-a,0],[-L/2,0,-a]])
+    n_pts = len(base_pts)
+    coefs = []
+    for i in range(n_pts):
+        vec = np.cross(tip-base_pts[i], tip-base_pts[(i+1)%n_pts])
+        vec = np.append(vec, np.dot(vec, base_pts[i]))
+        coefs.append(vec)
 
-                bcc_block = np.append(bcc_block, [i,j,k,i+1,j,k,i,j+1,k,i,j,k+1,i+1,j+1,k,i+1,j,k+1,i,j+1,k+1,i+1,j+1,k+1])
-                bcc_block = np.append(bcc_block, [i+0.5,j+0.5,k+0.5])
+    conditions = [condition_base]
+    for coef in coefs:
+        cond = np.dot(coef[:3], block.T) <= coef[3]
+        conditions.append(cond)
 
-    bcc_block = bcc_block * const
-    bcc_block = bcc_block.reshape((len(bcc_block)//3,3))
-    bcc_block = np.unique(bcc_block, axis=0)
-    bcc_block = center(bcc_block)
 
-    bcc_sphere = bcc_block[np.linalg.norm(bcc_block, axis=1)<= inp.core_radius]
+    conditions = np.array(conditions)
+    condition = np.all(conditions, axis=0)
+    core = block[condition]
+    dists = cdist(core, core)
+    coord_numbers = np.sum(dists<=(2*inp.bead_radius+0.01), axis=1)
+    ndx_alone = np.where(coord_numbers == 1)[0]
+    if len(ndx_alone) != 0:
+        core = np.delete(core, ndx_alone, axis=0)
 
-    return bcc_sphere
+    core[:,0] = core[:,0] - (np.max(core[:,0]) + np.min(core[:,0]))/2
+    return core
 
-def fcc_sphere(inp):
-    const = inp.bead_radius*np.sqrt(8)
-    cells_per_side = int((((2*inp.core_radius)//const)+1)//2*2+1)
-    N_unit_cells = cells_per_side**3
-    fcc_block = np.array([])
+def octahedron(block, inp):
+    a = inp.core_octahedron*1
+    tips = np.array([[0,0, a/np.sqrt(2)], [0,0, -a/np.sqrt(2)]])
+    base_pts = np.array([[a/2, a/2, 0], [-a/2, a/2, 0], [-a/2, -a/2, 0], [a/2, -a/2, 0]])
+    n_pts = len(base_pts)
+    coefs = []
+    for t, tip in enumerate(tips):
+        for i in range(n_pts):
+            vec = (-1)**(t)*np.cross(base_pts[i]-tip, base_pts[(i+1)%n_pts]-tip)
+            vec = np.append(vec, np.dot(vec, base_pts[i]))
+            coefs.append(vec)
 
-    for i in range(cells_per_side):
-        for j in range(cells_per_side):
-            for k in range(cells_per_side):
+    conditions = []
+    for coef in coefs:
+        cond = np.dot(coef[:3], block.T) <= coef[3] #Check this operator for lower part of the octahedron
+        conditions.append(cond)
 
-                fcc_block = np.append(fcc_block, [i,j,k,i+1,j,k,i,j+1,k,i,j,k+1,i+1,j+1,k,i+1,j,k+1,i,j+1,k+1,i+1,j+1,k+1])
-                fcc_block = np.append(fcc_block, [i,j+0.5,k+0.5,i+0.5,j,k+0.5,i+0.5,j+0.5,k,i+1,j+0.5,k+0.5,i+0.5,j+1,k+0.5,i+0.5,j+0.5,k+1])
+    conditions = np.array(conditions)
+    condition = np.all(conditions, axis=0)
 
-    fcc_block = fcc_block * const
-    fcc_block = fcc_block.reshape((len(fcc_block)//3,3))
-    fcc_block = np.unique(fcc_block, axis=0)
-    fcc_block = center(fcc_block)
+    core = block[condition]
+    core = core - np.mean(core, axis=0)
+    return core
 
-    fcc_sphere=fcc_block[np.linalg.norm(fcc_block, axis=1)<= inp.core_radius]
-
-    return fcc_sphere
-
-def hcp_xyz(h,k,l):
-    x = 2*h+(k+l)%2
-    y = np.sqrt(3)*(k+l%2/3)
-    z = 2*np.sqrt(6)/3*l
-    return [x, y, z]
-
-def hcp_sphere(inp):
-    const = inp.bead_radius * 2
-    cells_per_side = int(((2*inp.core_radius)//const)//2*2)+3
-    hcp_block = np.array([])
-
-    for i in range(cells_per_side):
-        for j in range(cells_per_side):
-            for k in range(cells_per_side):
-                hcp_block = np.append(hcp_block, [2*i+(j+k)%2, np.sqrt(3)*(j+k%2/3), 2*np.sqrt(6)/3*k])
-
-    #The following loops fix the edges of the hcp cube
-    i = cells_per_side
-    for j in range(cells_per_side//2+1):
-        for k in range(cells_per_side//2+1):
-            hcp_block = np.append(hcp_block, [i*2, j*2*np.sqrt(3),k*2*2*np.sqrt(6)/3])
-    for j in range(cells_per_side//2):
-        for k in range(cells_per_side//2):
-            hcp_block = np.append(hcp_block, [i*2, j*2*np.sqrt(3)+4*np.sqrt(3)/3, (2*k+1)*2*np.sqrt(6)/3])
-    j = cells_per_side
-    for i in range(cells_per_side):
-        for k in range(cells_per_side//2+1):
-            hcp_block = np.append(hcp_block, [i*2, j*np.sqrt(3),k*2*2*np.sqrt(6)/3])
-    k = cells_per_side
-    for i in range(cells_per_side):
-        for j in range(cells_per_side//2):
-            hcp_block = np.append(hcp_block, [i*2, j*2*np.sqrt(3),k*2*np.sqrt(6)/3])
-            hcp_block = np.append(hcp_block, [2*i+1, (2*j+1)*np.sqrt(3),k*2*np.sqrt(6)/3])
-
-    hcp_block = hcp_block*brad_opt
-    hcp_block = hcp_block.reshape((len(hcp_block)//3,3))
-    hcp_block = np.unique(hcp_block, axis=0)
-    hcp_block = center(hcp_block)
-    ndx_near = np.argmin(np.linalg.norm(hcp_block, axis=1))
-    hcp_block = hcp_block - hcp_block[ndx_near,:]
-
-    hcp_sphere = hcp_block[np.linalg.norm(hcp_block, axis=1) <= inp.core_radius]
-
-    return hcp_sphere
-
-def gkeka_method(a):
+def gkeka_method(a, inp):
     rft = []
     N_count = 0
     d = np.sqrt(a)
@@ -125,27 +112,27 @@ def gkeka_method(a):
         M_f = int(np.round(2*np.pi*np.sin(t)/d_f))
         for n in range(M_f):
             f = 2*np.pi*n/M_f
-            rft.append([radius_opt, f, t])
+            rft.append([inp.core_radius, f, t])
             N_count += 1
 
     rft = np.array(rft)
     gkeka_sphere = polar_to_cartesian(rft)
     return N_count, gkeka_sphere
 
-def hollow_sphere(inp):
+def shell(block, inp):
     ens, diffs = [], []
     a_ini = inp.bead_radius**2
     if inp.core_radius >= 0.8 and inp.core_radius <= 1.5:
         trial_areas = np.linspace(a_ini, 10*a_ini, 300)
-    elif np_rad > 1.5:
+    elif inp.core_radius > 1.5:
         trial_areas = np.linspace(a_ini/(inp.core_radius**2), a_ini*(inp.core_radius**2), 300)
     else:
-        print("Unsupported combination of buil-mode and nanoparticle radius")
+        print("Unsupported combination of build-mode and nanoparticle radius")
 
     diff = 1
 
     for area in trial_areas:
-        en, probe_sphere = gkeka_method(area)
+        en, probe_sphere = gkeka_method(area, inp)
         dists = cdist(probe_sphere, probe_sphere)
         new_diff = np.abs(np.mean(np.sort(dists, axis=1)[:,1])-2*inp.bead_radius)
         ens.append(en)
@@ -153,20 +140,9 @@ def hollow_sphere(inp):
         if new_diff < diff:
             #print(en)
             diff = new_diff
-            hol_sphere = probe_sphere
+            core = probe_sphere
 
     diffs = np.array(diffs)
     ens = np.array(ens)
 
-    return hol_sphere
-
-def print_xyz(coords):
-    coords = coords * 10
-    output = open(outname_opt, "w")
-    output.write(str(len(coords)) + "\n\n")
-    N_M = len(coords)-lignum_opt
-    for i in range(N_M):
-        output.write('MM' + '{:.3f}'.format(coords[i,0]).rjust(10) + "{:.3f}".format(coords[i,1]).rjust(10) + "{:.3f}".format(coords[i,2]).rjust(10) + "\n")
-    for i in range(N_M, len(coords)):
-        output.write('ST' + '{:.3f}'.format(coords[i,0]).rjust(10) + "{:.3f}".format(coords[i,1]).rjust(10) + "{:.3f}".format(coords[i,2]).rjust(10) + "\n")
-    output.close()
+    return core
