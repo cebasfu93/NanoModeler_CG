@@ -187,3 +187,20 @@ def merge_coordinates(core_xyz, lig_xyz):
     else:
         np_xyz = np.vstack((core_xyz, lig_xyz[0]))
     return np_xyz
+
+def calculate_volume(inp):
+    if inp.core_shape == "sphere" or inp.core_shape == "shell":
+        volume = 4./3*np.pi*inp.core_radius**3
+    elif inp.core_shape == "ellipsoid":
+        volume = 4./3*np.pi*np.prod(inp.core_ellipse_axis)
+    elif inp.core_shape == "cylinder":
+        volume = np.pi*inp.core_cylinder[0]**2*inp.core_cylinder[1]
+    elif inp.core_shape == "rectangular prism":
+        volume = np.prod(inp.rectangular_prism)
+    elif inp.core_shape == "rod":
+        volume = np.pi*inp.core_rod_params[0]**2*inp.core_rod_params[1] + 4./3*np.pi*inp.core_rod_params[1]**3
+    elif inp.core_shape == "pyramid":
+        volume = inp.core_pyramid[0]**2*inp.core_pyramid[1]/3
+    elif inp.core_shape == "octahedron":
+        volume = np.sqrt(2)/3*inp.core_octahedron**3
+    return volume
