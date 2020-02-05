@@ -13,13 +13,14 @@ def NanoModeler_CG(BEAD_RADIUS=0.26,
     CORE_EN=None,
     CORE_EN_K=5000,
 
-    LIG1_NUM=None,
+    GRAFT_DENSITY=0.216,
+
     LIG1_N_PER_BEAD=[],
     LIG1_BTYPES=[],
     LIG1_CHARGES=[],
     LIG1_MASSES=[],
+    LIG1_FRAC=1.0,
 
-    LIG2_NUM=None,
     LIG2_N_PER_BEAD=[],
     LIG2_BTYPES=[],
     LIG2_CHARGES=[],
@@ -59,14 +60,15 @@ def NanoModeler_CG(BEAD_RADIUS=0.26,
     core_en=CORE_EN,
     core_en_k=CORE_EN_K,
 
+    graft_density=GRAFT_DENSITY,
+
     lig1_n_per_bead=LIG1_N_PER_BEAD,
-    lig1_num=LIG1_NUM,
     lig1_btypes=LIG1_BTYPES,
     lig1_charges=LIG1_CHARGES,
     lig1_masses=LIG1_MASSES,
+    lig1_frac = LIG1_FRAC,
 
     lig2_n_per_bead=LIG2_N_PER_BEAD,
-    lig2_num=LIG2_NUM,
     lig2_btypes=LIG2_BTYPES,
     lig2_charges=LIG2_CHARGES,
     lig2_masses=LIG2_MASSES,
@@ -101,10 +103,7 @@ def NanoModeler_CG(BEAD_RADIUS=0.26,
         core_xyz = core_shape_functions[inp.core_shape](packed_block, inp)
     else:
         core_xyz = packed_block*1
-    print(len(core_xyz))
-    inp.char_radius = np.max(np.linalg.norm(core_xyz, axis=1))
-    inp.calculate_volume()
-    inp.core_bmass = inp.core_density*inp.vol*602.214/len(core_xyz) #g nm-3 to u.m.a bead-1
+    inp.characterize_core(core_xyz)
 
     #######LIGANDS#######
     staples_xyz, staples_normals = place_staples(core_xyz, inp)
@@ -145,13 +144,14 @@ if __name__ == "__main__":
     CORE_EN=False,
     CORE_EN_K=5000,
 
-    LIG1_NUM=8,
+    GRAFT_DENSITY=0.216, #nm2 thiol-1
+
     LIG1_N_PER_BEAD=[1,3,1],
     LIG1_BTYPES=["C1", "EO", "SP2"],
     LIG1_CHARGES=[0,0,0],
     LIG1_MASSES=[56,44,31],
+    LIG1_FRAC=1.0,
 
-    LIG2_NUM=0,
     LIG2_N_PER_BEAD=[],
     LIG2_BTYPES=[],
     LIG2_CHARGES=[],
