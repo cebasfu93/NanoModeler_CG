@@ -1,3 +1,10 @@
+import logging
+
+__VERSION__ = "0.1.0"
+
+def getVersion():
+    return __VERSION__
+
 def NanoModeler_CG(BEAD_RADIUS=0.26,
     CORE_RADIUS=None,
     CORE_METHOD=None,
@@ -31,18 +38,44 @@ def NanoModeler_CG(BEAD_RADIUS=0.26,
     STRIPES=1,
     PARAMETER_FILE=None):
 
-
+    logging.basicConfig(filename="nanomodelercg.log", level=logging.INFO)
+    logging.info("WELCOME TO NANOMODELER CG")
+    logging.info("Importing tempfile library...")
     import tempfile
+    logging.info("Importing os library...")
+    import os
+    logging.info("Importing numpy library...")
     import numpy as np
+    logging.info("Importing scipy.spatial.distance library...")
     from  scipy.spatial.distance import cdist
+    logging.info("Importing scipy.optimize library...")
     from scipy.optimize import minimize
+    logging.info("Importing private classes...")
     from DEPENDENCIES.Extras import Input, Parameters, center, cartesian_to_polar, polar_to_cartesian, sunflower_pts, merge_coordinates
+    logging.info("Importing lattice generators...")
     from DEPENDENCIES.spatial_distributions import primitive, bcc, fcc, hcp, shell
+    logging.info("Importing shape cutters...")
     from DEPENDENCIES.core_maker import sphere, ellipsoid, cylinder, rectangular_prism, rod, pyramid, octahedron
+    logging.info("Importing coating functions...")
     from DEPENDENCIES.coat_maker import place_staples, assign_morphology, grow_ligands
+    logging.info("Importing topology builder...")
     from DEPENDENCIES.top_maker import get_core_bonds, get_lig_bonds, get_lig_angles
+    logging.info("Importing writers...")
     from DEPENDENCIES.writers import gro_writer, top_writer
 
+    logging.info("Creating temporary folder...")
+    TMP = tempfile.mkdtemp(dir="./")
+
+    """report = logging.getLogger('nanomodelercg.report')
+    report.setLevel(logging.INFO)
+    report.handlers = []
+    reportFileHandler = logging.FileHandler(os.path.join(TMP, "report.log"), "w")
+    reportFileHandler.setLevel(logging.INFO)
+    formatter = logging.Formatter('%(message)s')
+    reportFileHandler.setFormatter(formatter)
+    report.addHandler(reportFileHandler)"""
+
+    logging.info("Importing parsed variables...")
     inp = Input(
     bead_radius=BEAD_RADIUS,
 
@@ -79,9 +112,6 @@ def NanoModeler_CG(BEAD_RADIUS=0.26,
 
     parameter_file=PARAMETER_FILE)
 
-
-    TMP = tempfile.mkdtemp(dir="./")
-
     core_packing_functions = {'primitive': primitive,
     'bcc': bcc,
     'fcc': fcc,
@@ -98,31 +128,52 @@ def NanoModeler_CG(BEAD_RADIUS=0.26,
     }
 
     #######CORE#######
+    logging.info("Building lattice block...")
     packed_block = core_packing_functions[inp.core_method](inp)
+    logging.info("Croping block into target shape...")
     if inp.core_shape != 'shape':
         core_xyz = core_shape_functions[inp.core_shape](packed_block, inp)
     else:
         core_xyz = packed_block*1
+    logging.info("Describing the cut shape...")
     inp.characterize_core(core_xyz)
 
     #######LIGANDS#######
+    logging.info("Placing ligand anchoring sites...")
     staples_xyz, staples_normals = place_staples(core_xyz, inp)
+    logging.info("Labeling ligands to anchoring site...")
     lig_ndx = assign_morphology(staples_xyz, inp)
+    logging.info("Growing ligands...")
     lig_xyz = grow_ligands(staples_xyz, staples_normals, lig_ndx, inp)
+    logging.info("Merging core with ligands...")
     np_xyz = merge_coordinates(core_xyz, lig_xyz)
 
+    logging.info("Writing structure file (.gro)...")
     gro_writer(TMP, np_xyz, inp)
 
     #######TOPOLOGY#######
     if inp.parameter_file != None:
+        logging.info("User provided topology file...")
+        logging.info("Importing parameters...")
         params = Parameters(inp.parameter_file)
+        logging.info("Looking for missing parameters...")
         params.check_missing_parameters(inp)
+        logging.info("Assigning bonds within the core...")
         core_bonds = get_core_bonds(core_xyz, inp)
+        logging.info("Assigning bonds within the ligands...")
         lig_bonds = get_lig_bonds(np_xyz, inp)
+        logging.info("Assigning angles within the ligands...")
         lig_angles = get_lig_angles(np_xyz, inp)
+        logging.info("Writing topology file (.top)...")
         top_writer(TMP, np_xyz, lig_bonds, lig_angles, inp, params)
     else:
-        print("Parameter file not found. Only writing nanoparticle structure.")
+        warn_txt = "ATTENTION. Parameter file not found. Only writing nanoparticle structure..."
+        #report.warning(warn_txt)
+        logging.warning(warn_txt)
+
+    """reportFileHandler.flush()
+    report.handlers.remove(reportFileHandler)
+    reportFileHandler.close()"""
 
     return 1
 

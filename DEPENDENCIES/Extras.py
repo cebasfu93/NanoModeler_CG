@@ -1,4 +1,9 @@
 import numpy as np
+import logging
+
+"""logger = logging.getLogger('nanomodelercg')
+logger.addHandler(logging.NullHandler())
+report = logging.getLogger('nanomodelercg.report')"""
 
 class Input:
     def __init__(self,
@@ -39,28 +44,24 @@ class Input:
         self.lig2_masses = lig2_masses
 
         self.morph = morph
-        #if "stripe" in self.morph:
-            #self.lig_num_tot = lig_num_tot
-        #else:
-            #self.lig_num_tot = self.lig1_num + self.lig2_num
         self.rsd = rsd
         self.stripes = stripes
 
         self.parameter_file = parameter_file
 
-        if core_shape == "sphere" or core_shape == "shell":
+        if self.core_shape == "sphere" or self.core_shape == "shell":
             self.char_radius = self.core_radius
-        elif core_shape == "ellipsoid":
+        elif self.core_shape == "ellipsoid":
             self.char_radius = np.max(self.core_ellipse_axis)
-        elif core_shape == "cylinder":
+        elif self.core_shape == "cylinder":
             self.char_radius = np.max([self.core_cylinder[0], self.core_cylinder[1]/2])
-        elif core_shape == "rectangular prism":
+        elif self.core_shape == "rectangular prism":
             self.char_radius = np.max(self.core_rect_prism)/2
-        elif core_shape == "rod":
+        elif self.core_shape == "rod":
             self.char_radius = self.core_rod_params[1]/2 + self.core_rod_params[0]
-        elif core_shape == "pyramid":
+        elif self.core_shape == "pyramid":
             self.char_radius = np.max([np.sqrt(2)*self.core_pyramid[0]/2, self.core_pyramid[1]/2])
-        elif core_shape == "octahedron":
+        elif self.core_shape == "octahedron":
             self.char_radius = self.core_octahedron/2
 
         if core_method == "primitive":
@@ -115,12 +116,19 @@ class Input:
         return volume
 
     def characterize_core(self, core_xyz):
+        logging.info("\tCharacterizing the core...")
         self.char_radius = np.max(np.linalg.norm(core_xyz, axis=1))
+        logging.info("\tCalculating volume of the core...")
         self.vol = self.calculate_volume()
+        logging.info("\t\tEstimating the core's mass per bead...")
         self.core_bmass = self.core_density*self.vol*602.214/len(core_xyz) #g nm-3 to u.m.a bead-1
+        logging.info("\tCalculating surface area of the core...")
         self.area = self.calculate_area()
+        logging.info("\tCalculating total number of ligands...")
         self.n_tot_lig = int(self.graft_density * self.area)
+        logging.info("\tCalculating number of ligands 1...")
         self.lig1_num = int(self.n_tot_lig * self.lig1_frac)
+        logging.info("\tCalculating number of ligands 2...")
         self.lig2_num = self.n_tot_lig - self.lig1_num
 
 class Bond:
@@ -193,7 +201,9 @@ class Parameters:
         if np.any(np.invert(bond_checks)):
             no_params_ndx = np.where(np.invert(bond_checks))[0]
             missing_pairs = ["{}-{}".format(lig_btypes[ndx], lig_btypes[ndx+1]) for ndx in no_params_ndx]
-            print("Missing parameters for bonds: {}".format(missing_pairs))
+            warn_txt = "Missing parameters for bonds: {}".format(missing_pairs)
+            #report.warning(warn_txt)
+            logging.warning(warn_txt)
 
     def check_angle_parameters(self, inp, lig1or2):
         lig_btypes = build_lig_btypes_list_n(inp, lig1or2)
@@ -201,7 +211,9 @@ class Parameters:
         if np.any(np.invert(angle_checks)):
             no_params_ndx = np.where(np.invert(angle_checks))[0]
             missing_pairs = ["{}-{}-{}".format(lig_btypes[ndx], lig_btypes[ndx+1], lig_btypes[ndx+2]) for ndx in no_params_ndx]
-            print("Missing parameters for angles: {}".format(missing_pairs))
+            warn_txt = "Missing parameters for angles: {}".format(missing_pairs)
+            #report.warning(warn_txt)
+            logging.warning(warn_txt)
 
     def check_dihedral_parameters(self, inp, lig1or2):
         lig_btypes = build_lig_btypes_list_n(inp, lig1or2)
@@ -209,23 +221,31 @@ class Parameters:
         if np.any(np.invert(dihedral_checks)):
             no_params_ndx = np.where(np.invert(dihedral_checks))[0]
             missing_pairs = ["{}-{}-{}-{}".format(lig_btypes[ndx], lig_btypes[ndx+1], lig_btypes[ndx+2], lig_btypes[ndx+3]) for ndx in no_params_ndx]
-            print("Missing parameters for dihedral: {}".format(missing_pairs))
+            warn_txt = "Missing parameters for dihedral: {}".format(missing_pairs)
+            #report.warning(warn_txt)
+            logging.warning(warn_txt)
 
     def check_missing_parameters(self, inp):
         n_at1 = np.sum(inp.lig1_n_per_bead)
         n_at2 = np.sum(inp.lig2_n_per_bead)
 
+        logging.info("\tLooking for bond parameters in ligand 1...")
         self.check_bond_parameters(inp, "1")
         if n_at1 > 2:
+            logging.info("\tLooking for angle parameters in ligand 1...")
             self.check_angle_parameters(inp, "1")
         if n_at1 > 3:
+            logging.info("\tLooking for dihedral parameters in ligand 1...")
             self.check_dihedral_parameters(inp, "1")
 
         if inp.lig2_num > 0:
+            logging.info("\tLooking for bond parameters in ligand 2...")
             self.check_bond_parameters(inp, "2")
             if n_at2 > 2:
+                logging.info("\tLooking for angle parameters in ligand 2...")
                 self.check_angle_parameters(inp, "2")
             if n_at2 > 3:
+                logging.info("\tLooking for dihedral parameters in ligand 2...")
                 self.check_dihedral_parameters(inp, "2")
 
 def build_lig_btypes_list_n(inp, lig1or2):
