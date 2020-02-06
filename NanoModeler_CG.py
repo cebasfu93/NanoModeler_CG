@@ -61,7 +61,7 @@ def NanoModeler_CG(BEAD_RADIUS=0.26,
     logger.info("Importing coating functions...")
     from DEPENDENCIES.coat_maker import place_staples, assign_morphology, grow_ligands
     logger.info("Importing topology builder...")
-    from DEPENDENCIES.top_maker import get_core_bonds, get_lig_bonds, get_lig_angles
+    from DEPENDENCIES.top_maker import get_core_bonds, get_lig_bonds, get_lig_angles, get_lig_dihedrals
     logger.info("Importing writers...")
     from DEPENDENCIES.writers import gro_writer, top_writer
 
@@ -165,8 +165,10 @@ def NanoModeler_CG(BEAD_RADIUS=0.26,
         lig_bonds = get_lig_bonds(np_xyz, inp)
         logger.info("Assigning angles within the ligands...")
         lig_angles = get_lig_angles(np_xyz, inp)
+        logger.info("Assigning dihedrals within the ligands...")
+        lig_dihedrals = get_lig_dihedrals(np_xyz, inp)
         logger.info("Writing topology file (.top)...")
-        top_writer(TMP, np_xyz, lig_bonds, lig_angles, inp, params)
+        top_writer(TMP, np_xyz, lig_bonds, lig_angles, lig_dihedrals, inp, params)
     else:
         warn_txt = "ATTENTION. Parameter file not found. Only writing nanoparticle structure..."
         logger.warning(warn_txt)

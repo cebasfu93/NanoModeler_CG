@@ -107,3 +107,46 @@ def get_lig_angles(np_xyz, inp):
                 lig2_angles.append(angle)
 
     return (lig1_angles, lig2_angles)
+
+def get_lig_dihedrals(np_xyz, inp):
+    n_at1, n_at2 = np.sum(inp.lig1_n_per_bead), np.sum(inp.lig2_n_per_bead)
+    n_core = int(len(np_xyz) - inp.lig1_num*n_at1 - inp.lig2_num*n_at2)
+    core_xyz = np_xyz[:n_core]
+
+    lig1_dihedrals, lig2_dihedrals = [], []
+
+    if n_at1 >= 3:
+        for i in range(inp.lig1_num):
+            ndx0 = n_core + i*n_at1
+            ndx1 = ndx0*1
+            ndx2 = ndx1 + 1
+            ndx3 = ndx1 + 2
+            ndx4 = np.argsort(cdist([np_xyz[ndx1]], core_xyz))[0,0]
+            dihedral = [ndx4, ndx1, ndx2, ndx3]
+            lig1_dihedrals.append(dihedral)
+            for j in range(n_at1-4):
+                ndx1 = ndx0 + j
+                ndx2 = ndx1 + 1
+                ndx3 = ndx1 + 2
+                ndx4 = ndx1 + 3
+                dihedral = [ndx1, ndx2, ndx3, ndx4]
+                lig1_dihedrals.append(dihedral)
+
+    if n_at2 >= 3:
+        for i in range(inp.lig2_num):
+            ndx0 = n_core + n_at1*inp.lig1_num + i*n_at2
+            ndx1 = ndx0*1
+            ndx2 = ndx1 + 1
+            ndx3 = ndx1 + 2
+            ndx4 = np.argsort(cdist([np_xyz[ndx1]], core_xyz))[0,0]
+            dihedral = [ndx4, ndx1, ndx2, ndx3]
+            lig2_dihedrals.append(dihedral)
+            for j in range(n_at2-4):
+                ndx1 = ndx0 + j
+                ndx2 = ndx1 + 1
+                ndx3 = ndx1 + 2
+                ndx4 = ndx1 + 3
+                dihedral = [ndx1, ndx2, ndx3, ndx4]
+                lig2_dihedrals.append(dihedral)
+
+    return (lig1_dihedrals, lig2_dihedrals)
