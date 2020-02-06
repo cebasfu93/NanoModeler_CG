@@ -37,7 +37,7 @@ def gro_writer(TMP, np_xyz, inp):
     f.write("{:>10.5f} {:>10.5f} {:>10.5f}".format(10,10,10))
     f.close()
 
-def top_writer(TMP, np_xyz, lig_bonds, lig_angles, inp, params):
+def top_writer(TMP, np_xyz, lig_bonds, lig_angles, lig_dihedrals, inp, params):
     n_at1 = np.sum(inp.lig1_n_per_bead)
     n_at2 = np.sum(inp.lig2_n_per_bead)
     n_core = int(len(np_xyz) - inp.lig1_num*n_at1 - inp.lig2_num*n_at2)
@@ -116,7 +116,27 @@ def top_writer(TMP, np_xyz, lig_bonds, lig_angles, inp, params):
         at3 = angle[2] + 1
         a_key = "{}-{}-{}".format(btypes[angle[0]], btypes[angle[1]], btypes[angle[2]])
         a_top = params.angletypes[a_key]
-        f.write("{:>5d} {:>5d} {:>5d} {:>6d} {:>9.4e}  {:>9.4e}\n".format(at1, at2, at3, a_top[0], a_top[1], a_top[2]))
+        f.write("{:>5d} {:>5d} {:>5d} {:>6d}  {:>9.4e}  {:>9.4e}\n".format(at1, at2, at3, a_top[0], a_top[1], a_top[2]))
+
+    logger.info("\tWriting [ dihedrals ]...")
+    f.write("\n[ dihedrals ]\n")
+    f.write(";  ai    aj    ak    al funct        phi0          kphi        m\n")
+    for dihedral in lig_dihedrals[0]:
+        at1 = dihedral[0] + 1
+        at2 = dihedral[1] + 1
+        at3 = dihedral[2] + 1
+        at4 = dihedral[3] + 1
+        d_key = "{}-{}-{}-{}".format(btypes[dihedral[0]], btypes[dihedral[1]], btypes[dihedral[2]], btypes[dihedral[3]])
+        d_top = params.dihedraltypes[d_key]
+        f.write("{:>5d} {:>5d} {:>5d} {:>5d} {:>6d}  {:>9.4e}  {:>9.4e}  {:>9.4e}\n".format(at1, at2, at3, at4, d_top[0], d_top[1], d_top[2], d_top[2]))
+    for dihedral in lig_dihedrals[1]:
+        at1 = dihedral[0] + 1
+        at2 = dihedral[1] + 1
+        at3 = dihedral[2] + 1
+        at4 = dihedral[3] + 1
+        d_key = "{}-{}-{}-{}".format(btypes[dihedral[0]], btypes[dihedral[1]], btypes[dihedral[2]], btypes[dihedral[3]])
+        d_top = params.dihedraltypes[d_key]
+        f.write("{:>5d} {:>5d} {:>5d} {:>5d} {:>6d}  {:>9.4e}  {:>9.4e}  {:>9.4e}\n".format(at1, at2, at3, at4, d_top[0], d_top[1], d_top[2], d_top[2]))
 
     logger.info("\tWriting [ system ]...")
     f.write("\n[ system ]\n")
