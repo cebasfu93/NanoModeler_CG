@@ -210,7 +210,7 @@ class Parameters:
         if np.any(np.invert(bond_checks)):
             no_params_ndx = np.where(np.invert(bond_checks))[0]
             missing_pairs = ["{}-{}".format(lig_btypes[ndx], lig_btypes[ndx+1]) for ndx in no_params_ndx]
-            warn_txt = "Missing parameters for bonds: {}".format(missing_pairs)
+            warn_txt = "ATTENTION. Missing parameters for bonds: {}".format(missing_pairs)
             logger.warning(warn_txt)
 
     def check_angle_parameters(self, inp, lig1or2):
@@ -219,7 +219,7 @@ class Parameters:
         if np.any(np.invert(angle_checks)):
             no_params_ndx = np.where(np.invert(angle_checks))[0]
             missing_pairs = ["{}-{}-{}".format(lig_btypes[ndx], lig_btypes[ndx+1], lig_btypes[ndx+2]) for ndx in no_params_ndx]
-            warn_txt = "Missing parameters for angles: {}".format(missing_pairs)
+            warn_txt = "ATTENTION. Missing parameters for angles: {}".format(missing_pairs)
             logger.warning(warn_txt)
 
     def check_dihedral_parameters(self, inp, lig1or2):
@@ -228,7 +228,7 @@ class Parameters:
         if np.any(np.invert(dihedral_checks)):
             no_params_ndx = np.where(np.invert(dihedral_checks))[0]
             missing_pairs = ["{}-{}-{}-{}".format(lig_btypes[ndx], lig_btypes[ndx+1], lig_btypes[ndx+2], lig_btypes[ndx+3]) for ndx in no_params_ndx]
-            warn_txt = "Missing parameters for dihedral: {}".format(missing_pairs)
+            warn_txt = "ATTENTION. Missing parameters for dihedral: {}".format(missing_pairs)
             logger.warning(warn_txt)
 
     def check_missing_parameters(self, inp):

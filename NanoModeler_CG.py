@@ -61,7 +61,7 @@ def NanoModeler_CG(BEAD_RADIUS=0.26,
     logger.info("Importing coating functions...")
     from DEPENDENCIES.coat_maker import place_staples, assign_morphology, grow_ligands
     logger.info("Importing topology builder...")
-    from DEPENDENCIES.top_maker import get_core_bonds, get_lig_bonds, get_lig_angles, get_lig_dihedrals
+    from DEPENDENCIES.top_maker import get_core_bonds, get_lig_bonded_atoms
     logger.info("Importing writers...")
     from DEPENDENCIES.writers import gro_writer, top_writer
 
@@ -161,12 +161,8 @@ def NanoModeler_CG(BEAD_RADIUS=0.26,
         params.check_missing_parameters(inp)
         logger.info("Assigning bonds within the core...")
         core_bonds = get_core_bonds(core_xyz, inp)
-        logger.info("Assigning bonds within the ligands...")
-        lig_bonds = get_lig_bonds(np_xyz, inp)
-        logger.info("Assigning angles within the ligands...")
-        lig_angles = get_lig_angles(np_xyz, inp)
-        logger.info("Assigning dihedrals within the ligands...")
-        lig_dihedrals = get_lig_dihedrals(np_xyz, inp)
+        logger.info("Assigning bonded interactions within the ligands...")
+        lig_bonds, lig_angles, lig_dihedrals = get_lig_bonded_atoms(np_xyz, inp)
         logger.info("Writing topology file (.top)...")
         top_writer(TMP, np_xyz, lig_bonds, lig_angles, lig_dihedrals, inp, params)
     else:
