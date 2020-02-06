@@ -147,6 +147,16 @@ class Angle:
         self.th0 = th0
         self.cth = cth
 
+class Dihedral:
+    def __init__(self, atype1, atype2, atype3, atype4, phi0, kphi, m):
+        self.atype1 = atype1
+        self.atype2 = atype2
+        self.atype3 = atype3
+        self.atype4 = atype4
+        self.phi0 = phi0
+        self.kphi = kphi
+        self.m = m
+
 class Parameters:
     def __init__(self, parameter_file):
         fl = parameter_file.readlines()
