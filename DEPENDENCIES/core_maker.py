@@ -3,25 +3,24 @@ from  scipy.spatial.distance import cdist
 from DEPENDENCIES.Extras import polar_to_cartesian
 import logging
 
-"""logger = logging.getLogger('nanomodelercg')
+logger = logging.getLogger('nanomodelercg')
 logger.addHandler(logging.NullHandler())
-report = logging.getLogger('nanomodelercg.report')"""
 
 def sphere(block, inp):
-    logging.info("\tChopping the lattice as a sphere...")
+    logger.info("\tChopping the lattice as a sphere...")
     core = block[np.linalg.norm(block, axis=1)<= inp.core_radius]
     core = core - np.mean(core, axis=0)
     return core
 
 def ellipsoid(block, inp):
-    logging.info("\tChopping the lattice as an ellipsoid...")
+    logger.info("\tChopping the lattice as an ellipsoid...")
     condition = (block[:,0]**2/inp.core_ellipse_axis[0]**2 + block[:,1]**2/inp.core_ellipse_axis[1]**2 + block[:,2]**2/inp.core_ellipse_axis[2]**2) <= 1.0
     core = block[condition]
     core = core - np.mean(core, axis=0)
     return core
 
 def rectangular_prism(block, inp):
-    logging.info("\tChopping the lattice as a rectangular prism...")
+    logger.info("\tChopping the lattice as a rectangular prism...")
     condition_x = np.logical_and(block[:,0] >= -1*inp.core_rect_prism[0]/2, block[:,0] <= inp.core_rect_prism[0]/2)
     condition_y = np.logical_and(block[:,1] >= -1*inp.core_rect_prism[1]/2, block[:,1] <= inp.core_rect_prism[1]/2)
     condition_z = np.logical_and(block[:,2] >= -1*inp.core_rect_prism[2]/2, block[:,2] <= inp.core_rect_prism[2]/2)
@@ -30,7 +29,7 @@ def rectangular_prism(block, inp):
     return core
 
 def cylinder(block, inp):
-    logging.info("\tChopping the lattice as a cylinder...")
+    logger.info("\tChopping the lattice as a cylinder...")
     condition_z = np.logical_and(block[:,2] <= inp.core_cylinder[1]/2, block[:,2] >= -inp.core_cylinder[1]/2)
     condition_circle = np.linalg.norm(block[:,0:2], axis=1) <= inp.core_cylinder[0]
 
@@ -39,7 +38,7 @@ def cylinder(block, inp):
     return core
 
 def rod(block, inp):
-    logging.info("\tChopping the lattice as a rod...")
+    logger.info("\tChopping the lattice as a rod...")
     condition_circle = np.linalg.norm(block[:,0:2], axis=1) <= inp.core_rod_params[0]
     condition_length = np.logical_and(block[:,2]<=inp.core_rod_params[1]/2, block[:,2]>= -1*inp.core_rod_params[1]/2)
     condition_cylinder = np.logical_and(condition_circle, condition_length)
@@ -55,7 +54,7 @@ def rod(block, inp):
     return core
 
 def pyramid(block, inp):
-    logging.info("\tChopping the lattice as a square pyramid...")
+    logger.info("\tChopping the lattice as a square pyramid...")
     condition_base = block[:,0] >= -1*inp.core_pyramid[1]/2
     a = inp.core_pyramid[0]*1
     L = inp.core_pyramid[1]*1
@@ -87,7 +86,7 @@ def pyramid(block, inp):
     return core
 
 def octahedron(block, inp):
-    logging.info("\tChopping the lattice as an octahedron...")
+    logger.info("\tChopping the lattice as an octahedron...")
     a = inp.core_octahedron*1
     tips = np.array([[0,0, a/np.sqrt(2)], [0,0, -a/np.sqrt(2)]])
     base_pts = np.array([[a/2, a/2, 0], [-a/2, a/2, 0], [-a/2, -a/2, 0], [a/2, -a/2, 0]])

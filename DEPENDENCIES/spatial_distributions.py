@@ -2,12 +2,11 @@ import numpy as np
 from DEPENDENCIES.Extras import center
 import logging
 
-"""logger = logging.getLogger('nanomodelercg')
+logger = logging.getLogger('nanomodelercg')
 logger.addHandler(logging.NullHandler())
-report = logging.getLogger('nanomodelercg.report')"""
 
 def primitive(inp):
-    logging.info("\tConstructing lattice from primitive unit cell...")
+    logger.info("\tConstructing lattice from primitive unit cell...")
     const = inp.bead_radius*2
     cells_per_side = int((((2*inp.char_radius)//const)+1)//2*2+1)
     N_unit_cells = cells_per_side**3
@@ -26,7 +25,7 @@ def primitive(inp):
     return xyz
 
 def bcc(inp):
-    logging.info("\tConstructing lattice from BCC unit cell...")
+    logger.info("\tConstructing lattice from BCC unit cell...")
     const = inp.bead_radius*4/np.sqrt(3)
     cells_per_side = int((((2*inp.char_radius)//const)+1)//2*2+1)
     N_unit_cells = cells_per_side**3
@@ -46,7 +45,7 @@ def bcc(inp):
     return xyz
 
 def fcc(inp):
-    logging.info("\tConstructing lattice from FCC unit cell...")
+    logger.info("\tConstructing lattice from FCC unit cell...")
     const = inp.bead_radius*np.sqrt(8)
     cells_per_side = int((((2*inp.char_radius)//const)+1)//2*2+1)
     N_unit_cells = cells_per_side**3
@@ -66,7 +65,7 @@ def fcc(inp):
     return xyz
 
 def hcp(inp):
-    logging.info("\tConstructing lattice from HCP unit cell...")
+    logger.info("\tConstructing lattice from HCP unit cell...")
     const = inp.bead_radius * 2
     cells_per_side = int(((2*inp.char_radius)//const)//2*2)+3
     xyz = np.array([])
@@ -122,7 +121,7 @@ def gkeka_method(a, inp):
     return N_count, gkeka_sphere
 
 def shell(block, inp):
-    logging.info("\tConstructing hollow shell from concentric rings...")
+    logger.info("\tConstructing hollow shell from concentric rings...")
     ens, diffs = [], []
     a_ini = inp.bead_radius**2
     if inp.core_radius >= 0.8 and inp.core_radius <= 1.5:
@@ -131,7 +130,6 @@ def shell(block, inp):
         trial_areas = np.linspace(a_ini/(inp.core_radius**2), a_ini*(inp.core_radius**2), 300)
     else:
         err_txt = "Unsupported combination of build-mode and nanoparticle radius"
-        #report.error(err_txt)
         raise Exception(err_txt)
 
     diff = 1

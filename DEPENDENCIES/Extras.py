@@ -1,9 +1,8 @@
 import numpy as np
 import logging
 
-"""logger = logging.getLogger('nanomodelercg')
+logger = logging.getLogger('nanomodelercg')
 logger.addHandler(logging.NullHandler())
-report = logging.getLogger('nanomodelercg.report')"""
 
 class Input:
     def __init__(self,
@@ -116,19 +115,19 @@ class Input:
         return volume
 
     def characterize_core(self, core_xyz):
-        logging.info("\tCharacterizing the core...")
+        logger.info("\tCharacterizing the core...")
         self.char_radius = np.max(np.linalg.norm(core_xyz, axis=1))
-        logging.info("\tCalculating volume of the core...")
+        logger.info("\tCalculating volume of the core...")
         self.vol = self.calculate_volume()
-        logging.info("\t\tEstimating the core's mass per bead...")
+        logger.info("\tEstimating the core's mass per bead...")
         self.core_bmass = self.core_density*self.vol*602.214/len(core_xyz) #g nm-3 to u.m.a bead-1
-        logging.info("\tCalculating surface area of the core...")
+        logger.info("\tCalculating surface area of the core...")
         self.area = self.calculate_area()
-        logging.info("\tCalculating total number of ligands...")
+        logger.info("\tCalculating total number of ligands...")
         self.n_tot_lig = int(self.graft_density * self.area)
-        logging.info("\tCalculating number of ligands 1...")
+        logger.info("\tCalculating number of ligands 1...")
         self.lig1_num = int(self.n_tot_lig * self.lig1_frac)
-        logging.info("\tCalculating number of ligands 2...")
+        logger.info("\tCalculating number of ligands 2...")
         self.lig2_num = self.n_tot_lig - self.lig1_num
 
 class Bond:
@@ -202,8 +201,7 @@ class Parameters:
             no_params_ndx = np.where(np.invert(bond_checks))[0]
             missing_pairs = ["{}-{}".format(lig_btypes[ndx], lig_btypes[ndx+1]) for ndx in no_params_ndx]
             warn_txt = "Missing parameters for bonds: {}".format(missing_pairs)
-            #report.warning(warn_txt)
-            logging.warning(warn_txt)
+            logger.warning(warn_txt)
 
     def check_angle_parameters(self, inp, lig1or2):
         lig_btypes = build_lig_btypes_list_n(inp, lig1or2)
@@ -212,8 +210,7 @@ class Parameters:
             no_params_ndx = np.where(np.invert(angle_checks))[0]
             missing_pairs = ["{}-{}-{}".format(lig_btypes[ndx], lig_btypes[ndx+1], lig_btypes[ndx+2]) for ndx in no_params_ndx]
             warn_txt = "Missing parameters for angles: {}".format(missing_pairs)
-            #report.warning(warn_txt)
-            logging.warning(warn_txt)
+            logger.warning(warn_txt)
 
     def check_dihedral_parameters(self, inp, lig1or2):
         lig_btypes = build_lig_btypes_list_n(inp, lig1or2)
@@ -222,30 +219,29 @@ class Parameters:
             no_params_ndx = np.where(np.invert(dihedral_checks))[0]
             missing_pairs = ["{}-{}-{}-{}".format(lig_btypes[ndx], lig_btypes[ndx+1], lig_btypes[ndx+2], lig_btypes[ndx+3]) for ndx in no_params_ndx]
             warn_txt = "Missing parameters for dihedral: {}".format(missing_pairs)
-            #report.warning(warn_txt)
-            logging.warning(warn_txt)
+            logger.warning(warn_txt)
 
     def check_missing_parameters(self, inp):
         n_at1 = np.sum(inp.lig1_n_per_bead)
         n_at2 = np.sum(inp.lig2_n_per_bead)
 
-        logging.info("\tLooking for bond parameters in ligand 1...")
+        logger.info("\tLooking for bond parameters in ligand 1...")
         self.check_bond_parameters(inp, "1")
         if n_at1 > 2:
-            logging.info("\tLooking for angle parameters in ligand 1...")
+            logger.info("\tLooking for angle parameters in ligand 1...")
             self.check_angle_parameters(inp, "1")
         if n_at1 > 3:
-            logging.info("\tLooking for dihedral parameters in ligand 1...")
+            logger.info("\tLooking for dihedral parameters in ligand 1...")
             self.check_dihedral_parameters(inp, "1")
 
         if inp.lig2_num > 0:
-            logging.info("\tLooking for bond parameters in ligand 2...")
+            logger.info("\tLooking for bond parameters in ligand 2...")
             self.check_bond_parameters(inp, "2")
             if n_at2 > 2:
-                logging.info("\tLooking for angle parameters in ligand 2...")
+                logger.info("\tLooking for angle parameters in ligand 2...")
                 self.check_angle_parameters(inp, "2")
             if n_at2 > 3:
-                logging.info("\tLooking for dihedral parameters in ligand 2...")
+                logger.info("\tLooking for dihedral parameters in ligand 2...")
                 self.check_dihedral_parameters(inp, "2")
 
 def build_lig_btypes_list_n(inp, lig1or2):

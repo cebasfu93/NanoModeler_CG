@@ -2,9 +2,8 @@ import numpy as np
 from  scipy.spatial.distance import cdist
 import logging
 
-"""logger = logging.getLogger('nanomodelercg')
+logger = logging.getLogger('nanomodelercg')
 logger.addHandler(logging.NullHandler())
-report = logging.getLogger('nanomodelercg.report')"""
 
 def get_core_bonds(core_xyz, inp):
     core_bonds = []
@@ -12,7 +11,7 @@ def get_core_bonds(core_xyz, inp):
     if inp.core_en:
         dists = cdist(core_xyz, core_xyz)
         if inp.core_shape != "shell":
-            logging.info("\tBuilding elastic network based on first neighbours...")
+            logger.info("\tBuilding elastic network based on first neighbours...")
             close_dists = dists <= (2*inp.bead_radius+0.01)
             for i in range(len(dists)):
                 ndx1 = i*1
@@ -25,7 +24,7 @@ def get_core_bonds(core_xyz, inp):
                         core_bonds.append([ndx1, ndx2])
 
         else:
-            logging.info("\tBuilding elastic network based on six nearest neighbours and one farthest neighbour...")
+            logger.info("\tBuilding elastic network based on six nearest neighbours and one farthest neighbour...")
             dists_sorted = np.argsort(dists, axis=1)
             for i in range(len(dists)):
                 ndx1 = i*1

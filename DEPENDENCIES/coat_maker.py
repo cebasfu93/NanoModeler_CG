@@ -4,9 +4,8 @@ from  scipy.spatial.distance import cdist
 from DEPENDENCIES.Extras import sunflower_pts, cartesian_to_polar, polar_to_cartesian
 import logging
 
-"""logger = logging.getLogger('nanomodelercg')
+logger = logging.getLogger('nanomodelercg')
 logger.addHandler(logging.NullHandler())
-report = logging.getLogger('nanomodelercg.report')"""
 
 def sphere_cons(xyz, rad):
     zero = np.linalg.norm(xyz) - rad
@@ -20,7 +19,7 @@ def calc_Q(xyz, staples, ndx):
     return Q
 
 def electric_minimization(xyz):
-    logging.info("\tMinimizing points on a sphere...")
+    logger.info("\tMinimizing points on a sphere...")
     R_model = np.linalg.norm(xyz[0])
     max_iter = 100 #this value is an arbitrary value to avoid getting stuck in a loop
     for i in range(max_iter):
@@ -31,12 +30,11 @@ def electric_minimization(xyz):
             xyz[j] = res_min.x
             iterations.append(res_min.nit)
         if np.all(np.array(iterations)==1):
-            logging.info("\tMinimization converged at {} steps...".format(i))
+            logger.info("\tMinimization converged at {} steps...".format(i))
             break
         if i == (max_iter-1):
             warn_txt = "\tATTENTION. The minimization of the electric potential energy did not finish. Double check the position of the ligands in the output structure..."
-            #report.warning(warn_txt)
-            logging.warning(warn_txt)
+            logger.warning(warn_txt)
     return xyz
 
 def place_staples(core_xyz, inp):
@@ -44,7 +42,7 @@ def place_staples(core_xyz, inp):
 
     virtual_xyz = sunflower_pts(inp.n_tot_lig)*(inp.char_radius + 2*inp.bead_radius)
     if inp.n_tot_lig <= 20:
-        logging.info("\tAnchors will be placed minimizing electric energy. This will place the ligands as far away as possible from one another...")
+        logger.info("\tAnchors will be placed minimizing electric energy. This will place the ligands as far away as possible from one another...")
         virtual_xyz = electric_minimization(virtual_xyz)
 
     if inp.core_shape != "shell":
@@ -52,10 +50,9 @@ def place_staples(core_xyz, inp):
         surface = np.sum(core_dists<=d_thres, axis=1) < inp.n_coord
     else:
         surface = np.ones(len(core_xyz), dtype='bool')
-    logging.info("\tThe surface beads of the core allow a maximum of {} ligands...".format(np.sum(surface)))
+    logger.info("\tThe surface beads of the core allow a maximum of {} ligands...".format(np.sum(surface)))
     if np.sum(surface) < inp.n_tot_lig:
         err_txt = "\tThere are more ligands than surface core beads..."
-        #report.error(err_txt)
         raise ValueError(err_txt)
 
     core_vir_dists = cdist(cartesian_to_polar(virtual_xyz)[:,1:], cartesian_to_polar(core_xyz)[:,1:])
@@ -72,7 +69,7 @@ def place_staples(core_xyz, inp):
             D += 1
     closests = core_xyz[close_ndxs]
 
-    logging.info("\tSaving normal directions to the surface at the anchoring sites...")
+    logger.info("\tSaving normal directions to the surface at the anchoring sites...")
     normals = np.zeros((inp.n_tot_lig, 3))
     staples_xyz = np.empty((inp.n_tot_lig, 3))
     dists = cdist(closests, core_xyz)
@@ -102,13 +99,13 @@ def assign_morphology(staples_xyz, inp):
         ax = 2
 
     if 'janus' in inp.morph:
-        logging.info("\tDistributing ligands in a Janus configuration...")
+        logger.info("\tDistributing ligands in a Janus configuration...")
         ax_sort = np.argsort(staples_xyz[:,ax])
         lig1_ndx = ax_sort[:inp.lig1_num]
         lig2_ndx = ax_sort[inp.lig1_num:]
 
     if 'stripe' in inp.morph:
-        logging.info("\tDistributing ligands in a Striped configuration...")
+        logger.info("\tDistributing ligands in a Striped configuration...")
         phis = np.arccos(np.divide(staples_xyz[:,ax], np.linalg.norm(staples_xyz, axis=1)))
         dphi = (np.pi+0.00001)/inp.stripes
         lig1_ndx = []
@@ -122,7 +119,7 @@ def assign_morphology(staples_xyz, inp):
         inp.lig2_num = len(lig2_ndx)
 
     if inp.morph == 'random':
-        logging.info("\tDistributing ligands in a Random configuration...")
+        logger.info("\tDistributing ligands in a Random configuration...")
         np.random.seed(inp.rsd)
         np.random.shuffle(indexes)
         lig1_ndx = indexes[:inp.lig1_num]
@@ -131,7 +128,7 @@ def assign_morphology(staples_xyz, inp):
 
 def grow_ligands(staples_xyz, staples_normals, lig_ndx, inp):
     lig1_xyz, lig2_xyz = [], []
-    logging.info("\tGrowing ligand 1 from the respective anchoring sites...")
+    logger.info("\tGrowing ligand 1 from the respective anchoring sites...")
     for ndx in lig_ndx[0]:
         dist_units = 0
         for i in range(len(inp.lig1_btypes)):
@@ -141,7 +138,7 @@ def grow_ligands(staples_xyz, staples_normals, lig_ndx, inp):
                 lig1_xyz.append(xyz)
                 dist_units += 1
 
-    logging.info("\tGrowing ligand 2 from the respective anchoring sites...")
+    logger.info("\tGrowing ligand 2 from the respective anchoring sites...")
     for ndx in lig_ndx[1]:
         dist_units = 0
         for i in range(len(inp.lig2_btypes)):
