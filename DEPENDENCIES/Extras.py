@@ -177,6 +177,8 @@ class Parameters:
 
         angletypes_section = False
         angle_info = []
+        angles = {}
+        angles2 = {}
         for line in fl:
             if angletypes_section == True:
                 if ("[ " in line) and (" ]" in line):
@@ -185,14 +187,22 @@ class Parameters:
                     angle_info.append(line.split())
             if "[ angletypes ]" in line:
                 angletypes_section = True
-        angles = {"{}-{}-{}".format(angle[0], angle[1], angle[2]) : [int(angle[3]), float(angle[4]), float(angle[5])] for angle in angle_info}
-        angles2 = {"{}-{}-{}".format(angle[2], angle[1], angle[0]) : [int(angle[3]), float(angle[4]), float(angle[5])] for angle in angle_info}
-        self.angletypes = {**angles, **angles2}
-
+        for angle in angle_info:
+            a_key = "{}-{}-{}".format(angle[0], angle[1], angle[2])
+            a_key_invert = "{}-{}-{}".format(angle[2], angle[1], angle[0])
+            if a_key in angles.keys():
+                angles[a_key] += [[int(angle[3]), float(angle[4]), float(angle[5])]]
+                angles2[a_key_invert] += [[int(angle[3]), float(angle[4]), float(angle[5])]]
+            else:
+                angles[a_key] = [[int(angle[3]), float(angle[4]), float(angle[5])]]
+                angles2[a_key_invert] = [[int(angle[3]), float(angle[4]), float(angle[5])]]
+        angles.update(angles2)
+        self.angletypes = angles
 
         dihedraltypes_section = False
         dihedral_info = []
         dihedrals = {}
+        dihedrals2 = {}
         for line in fl:
             if dihedraltypes_section == True:
                 if ("[ " in line) and (" ]" in line):
@@ -205,12 +215,13 @@ class Parameters:
             d_key = "{}-{}-{}-{}".format(dihedral[0], dihedral[1], dihedral[2], dihedral[3])
             d_key_invert = "{}-{}-{}-{}".format(dihedral[3], dihedral[2], dihedral[1], dihedral[0])
             if d_key in dihedrals.keys():
-                dihedrals[d_key] += [int(dihedral[4]), float(dihedral[5]), float(dihedral[6])]
-                dihedrals[d_key_invert] += [int(dihedral[4]), float(dihedral[5]), float(dihedral[6])]
+                dihedrals[d_key] += [[int(dihedral[4]), float(dihedral[5]), float(dihedral[6]), int(dihedral[7])]]
+                dihedrals2[d_key_invert] += [[int(dihedral[4]), float(dihedral[5]), float(dihedral[6]), int(dihedral[7])]]
             else:
-                dihedrals[d_key] = [[int(dihedral[4]), float(dihedral[5]), float(dihedral[6])]]
-                dihedrals2[d_key_invert] = [[int(dihedral[4]), float(dihedral[5]), float(dihedral[6])]]
-        self.dihedraltypes = {**dihedrals, **dihedrals2}
+                dihedrals[d_key] = [[int(dihedral[4]), float(dihedral[5]), float(dihedral[6]), int(dihedral[7])]]
+                dihedrals2[d_key_invert] = [[int(dihedral[4]), float(dihedral[5]), float(dihedral[6]), int(dihedral[7])]]
+        dihedrals.update(dihedrals2)
+        self.dihedraltypes = dihedrals
 
     def check_bond_parameters(self, inp, lig1or2):
         lig_btypes = build_lig_btypes_list_n(inp, lig1or2)
