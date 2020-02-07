@@ -127,7 +127,7 @@ class Input:
         self.area = self.calculate_area()
         logger.info("\t\tSuperficial area of the core: {:.2f} nm2".format(self.area))
         logger.info("\tCalculating total number of ligands...")
-        self.n_tot_lig = int(self.graft_density * self.area)
+        self.n_tot_lig = int(self.area/self.graft_density)
         logger.info("\t\tTotal number of ligands: {}".format(self.n_tot_lig))
         logger.info("\tCalculating number of ligands 1...")
         self.lig1_num = int(self.n_tot_lig * self.lig1_frac)
