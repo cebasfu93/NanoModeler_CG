@@ -134,7 +134,7 @@ def top_writer(TMP, np_xyz, lig_bonds, lig_angles, lig_dihedrals, inp, params):
 
     logger.info("\tWriting [ dihedrals ]...")
     f.write("\n[ dihedrals ]\n")
-    f.write(";  ai    aj    ak    al funct        phi0          kphi        m\n")
+    f.write(";  ai    aj    ak    al  funct        phi0        kphi          m\n")
     for dihedral in lig_dihedrals[0]:
         at1 = dihedral[0] + 1
         at2 = dihedral[1] + 1
@@ -144,7 +144,7 @@ def top_writer(TMP, np_xyz, lig_bonds, lig_angles, lig_dihedrals, inp, params):
         try:
             d_tops = params.dihedraltypes[d_key]
             for d_top in d_tops:
-                f.write("{:>5d} {:>5d} {:>5d} {:>5d} {:>6d}  {:>9.4e}  {:>9.4e}  {:>9.4e}\n".format(at1, at2, at3, at4, d_top[0], d_top[1], d_top[2], d_top[2]))
+                f.write("{:>5d} {:>5d} {:>5d} {:>5d} {:>6d}  {:>9.4e}  {:>9.4e}  {:>9d}\n".format(at1, at2, at3, at4, d_top[0], d_top[1], d_top[2], d_top[3]))
         except:
             logger.warning("\t\tOmitting dihedral {}. Params not found...".format(d_key))
     for dihedral in lig_dihedrals[1]:
@@ -156,7 +156,7 @@ def top_writer(TMP, np_xyz, lig_bonds, lig_angles, lig_dihedrals, inp, params):
         try:
             d_tops = params.dihedraltypes[d_key]
             for d_top in d_tops:
-                f.write("{:>5d} {:>5d} {:>5d} {:>5d} {:>6d}  {:>9.4e}  {:>9.4e}  {:>9.4e}\n".format(at1, at2, at3, at4, d_top[0], d_top[1], d_top[2], d_top[2]))
+                f.write("{:>5d} {:>5d} {:>5d} {:>5d} {:>6d}  {:>9.4e}  {:>9.4e}  {:>9d}\n".format(at1, at2, at3, at4, d_top[0], d_top[1], d_top[2], d_top[3]))
         except:
             logger.warning("\t\tOmitting dihedral {}. Params not found...".format(d_key))
 
