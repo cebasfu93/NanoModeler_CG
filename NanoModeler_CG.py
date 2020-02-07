@@ -8,37 +8,37 @@ __VERSION__ = "0.1.0"
 def getVersion():
     return __VERSION__
 
-def NanoModeler_CG(BEAD_RADIUS=0.26,
+def NanoModeler_CG(BEAD_RADIUS=None,
     CORE_RADIUS=None,
     CORE_METHOD=None,
     CORE_DENSITY=None,
-    CORE_SHAPE="sphere",
-    CORE_CYLINDER=[1.5,1.5],
-    CORE_ELLIPSE_AXIS=[1.5,1.5,1.5],
-    CORE_RECT_PRISM=[1.5,1.5,1.5],
-    CORE_ROD_PARAMS=[1.5,1.5],
-    CORE_PYRAMID=[1.5,1.5],
-    CORE_OCTAHEDRON_EDGE=1.5,
+    CORE_SHAPE=None,
+    CORE_CYLINDER=None,
+    CORE_ELLIPSE_AXIS=None,
+    CORE_RECT_PRISM=None,
+    CORE_ROD_PARAMS=None,
+    CORE_PYRAMID=None,
+    CORE_OCTAHEDRON_EDGE=None,
     CORE_BTYPE=None,
     CORE_EN=None,
-    CORE_EN_K=5000,
+    CORE_EN_K=None,
 
-    GRAFT_DENSITY=0.216,
+    GRAFT_DENSITY=None,
 
-    LIG1_N_PER_BEAD=[],
-    LIG1_BTYPES=[],
-    LIG1_CHARGES=[],
-    LIG1_MASSES=[],
-    LIG1_FRAC=1.0,
+    LIG1_N_PER_BEAD=None,
+    LIG1_BTYPES=None,
+    LIG1_CHARGES=None,
+    LIG1_MASSES=None,
+    LIG1_FRAC=None,
 
     LIG2_N_PER_BEAD=[],
     LIG2_BTYPES=[],
     LIG2_CHARGES=[],
     LIG2_MASSES=[],
 
-    MORPHOLOGY='random',
+    MORPHOLOGY=None,
     RSEED=None,
-    STRIPES=1,
+    STRIPES=None,
     PARAMETER_FILE=None):
 
     logger.info("WELCOME TO NANOMODELER CG")

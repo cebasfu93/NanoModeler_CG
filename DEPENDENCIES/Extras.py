@@ -42,7 +42,10 @@ class Input:
         self.lig2_charges = lig2_charges
         self.lig2_masses = lig2_masses
 
-        self.morph = morph
+        if self.lig1_frac == None or self.lig1_frac == 1.0:
+            self.morph = "homogeneous"
+        else:
+            self.morph = morph
         self.rsd = rsd
         self.stripes = stripes
 
@@ -136,33 +139,6 @@ class Input:
         self.lig2_num = self.n_tot_lig - self.lig1_num
         logger.info("\t\tNumber of ligands 2: {}".format(self.lig2_num))
 
-class Bond:
-    def __init__(self, atype1, atype2, func, b0, kb):
-        self.atype1 = atype1
-        self.atype2 = atype2
-        self.func = func
-        self.b0 = b0
-        self.kb = kb
-
-class Angle:
-    def __init__(self, atype1, atype2, atype3, func, th0, cth):
-        self.atype1 = atype1
-        self.atype2 = atype2
-        self.atype3 = atype3
-        self.func = func
-        self.th0 = th0
-        self.cth = cth
-
-class Dihedral:
-    def __init__(self, atype1, atype2, atype3, atype4, phi0, kphi, m):
-        self.atype1 = atype1
-        self.atype2 = atype2
-        self.atype3 = atype3
-        self.atype4 = atype4
-        self.phi0 = phi0
-        self.kphi = kphi
-        self.m = m
-
 class Parameters:
     def __init__(self, parameter_file):
         fl = parameter_file.readlines()
@@ -179,7 +155,8 @@ class Parameters:
                 bondtypes_section = True
         bonds = {"{}-{}".format(bond[0], bond[1]) : [int(bond[2]), float(bond[3]), float(bond[4])] for bond in bond_info}
         bonds2 = {"{}-{}".format(bond[1], bond[0]) : [int(bond[2]), float(bond[3]), float(bond[4])] for bond in bond_info}
-        self.bondtypes = {**bonds, **bonds2}
+        bonds.update(bonds2)
+        self.bondtypes = bonds
 
         angletypes_section = False
         angle_info = []

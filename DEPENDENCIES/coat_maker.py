@@ -110,7 +110,7 @@ def assign_morphology(staples_xyz, inp):
         lig1_ndx = ax_sort[:inp.lig1_num]
         lig2_ndx = ax_sort[inp.lig1_num:]
 
-    if 'stripe' in inp.morph:
+    elif 'stripe' in inp.morph:
         logger.info("\tDistributing ligands in a Striped configuration...")
         phis = np.arccos(np.divide(staples_xyz[:,ax], np.linalg.norm(staples_xyz, axis=1)))
         dphi = (np.pi+0.00001)/inp.stripes
@@ -124,12 +124,15 @@ def assign_morphology(staples_xyz, inp):
         inp.lig1_num = len(lig1_ndx)
         inp.lig2_num = len(lig2_ndx)
 
-    if inp.morph == 'random':
+    elif inp.morph == 'random':
         logger.info("\tDistributing ligands in a Random configuration...")
         np.random.seed(inp.rsd)
         np.random.shuffle(indexes)
         lig1_ndx = indexes[:inp.lig1_num]
         lig2_ndx = indexes[inp.lig1_num:]
+    elif inp.morph == 'homogeneous':
+        lig1_ndx = indexes
+        lig2_ndx = []
     return (lig1_ndx, lig2_ndx)
 
 def grow_ligands(staples_xyz, staples_normals, lig_ndx, inp):
