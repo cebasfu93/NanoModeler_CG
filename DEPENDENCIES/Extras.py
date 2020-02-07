@@ -119,16 +119,22 @@ class Input:
         self.char_radius = np.max(np.linalg.norm(core_xyz, axis=1))
         logger.info("\tCalculating volume of the core...")
         self.vol = self.calculate_volume()
+        logger.info("\t\tVolume of the core: {:.1f} nm3".format(self.vol))
         logger.info("\tEstimating the core's mass per bead...")
         self.core_bmass = self.core_density*self.vol*602.214/len(core_xyz) #g nm-3 to u.m.a bead-1
+        logger.info("\t\tMass per core bead: {:.3f} u.m.a.".format(self.core_bmass))
         logger.info("\tCalculating surface area of the core...")
         self.area = self.calculate_area()
+        logger.info("\t\tSuperficial area of the core: {:.2f} nm2".format(self.area))
         logger.info("\tCalculating total number of ligands...")
         self.n_tot_lig = int(self.graft_density * self.area)
+        logger.info("\t\tTotal number of ligands: {}".format(self.n_tot_lig))
         logger.info("\tCalculating number of ligands 1...")
         self.lig1_num = int(self.n_tot_lig * self.lig1_frac)
+        logger.info("\t\tNumber of ligands 1: {}".format(self.lig1_num))
         logger.info("\tCalculating number of ligands 2...")
         self.lig2_num = self.n_tot_lig - self.lig1_num
+        logger.info("\t\tNumber of ligands 2: {}".format(self.lig2_num))
 
 class Bond:
     def __init__(self, atype1, atype2, func, b0, kb):

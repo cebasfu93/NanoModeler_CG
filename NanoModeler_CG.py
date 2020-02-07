@@ -112,6 +112,8 @@ def NanoModeler_CG(BEAD_RADIUS=0.26,
     stripes=STRIPES,
 
     parameter_file=PARAMETER_FILE)
+    for key, value in inp.__dict__.items():
+        logger.info("\t{:<20}  {:<60}".format(key, str(value)))
 
     core_packing_functions = {'primitive': primitive,
     'bcc': bcc,
