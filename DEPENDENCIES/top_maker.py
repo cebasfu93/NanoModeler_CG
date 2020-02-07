@@ -35,6 +35,16 @@ def get_core_bonds(core_xyz, inp):
 
     return core_bonds
 
+def get_lig_bonded_atoms(np_xyz, inp):
+    logger.info("\tAssigning bonds within the ligands...")
+    lig_bonds = get_lig_bonds(np_xyz, inp)
+    logger.info("\tAssigning angles within the ligands...")
+    lig_angles = get_lig_angles(np_xyz, inp)
+    logger.info("\tAssigning dihedrals within the ligands...")
+    lig_dihedrals = get_lig_dihedrals(np_xyz, inp)
+
+    return lig_bonds, lig_angles, lig_dihedrals
+
 def get_lig_bonds(np_xyz, inp):
     n_at1, n_at2 = np.sum(inp.lig1_n_per_bead), np.sum(inp.lig2_n_per_bead)
     n_core = int(len(np_xyz) - inp.lig1_num*n_at1 - inp.lig2_num*n_at2)

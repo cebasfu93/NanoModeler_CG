@@ -154,9 +154,12 @@ def NanoModeler_CG(BEAD_RADIUS=0.26,
 
     #######TOPOLOGY#######
     if inp.parameter_file != None:
-        logger.info("User provided topology file...")
+        logger.info("User provided a topology file...")
         logger.info("Importing parameters...")
         params = Parameters(inp.parameter_file)
+        print(params.bondtypes.keys())
+        print(params.angletypes.keys())
+        print(params.dihedraltypes.keys())
         logger.info("Looking for missing parameters...")
         params.check_missing_parameters(inp)
         logger.info("Assigning bonds within the core...")

@@ -192,6 +192,7 @@ class Parameters:
 
         dihedraltypes_section = False
         dihedral_info = []
+        dihedrals = {}
         for line in fl:
             if dihedraltypes_section == True:
                 if ("[ " in line) and (" ]" in line):
@@ -200,8 +201,15 @@ class Parameters:
                     dihedral_info.append(line.split())
             if "[ dihedraltypes ]" in line:
                 dihedraltypes_section = True
-        dihedrals = {"{}-{}-{}-{}".format(dihedral[0], dihedral[1], dihedral[2], dihedral[3]) : [int(dihedral[4]), float(dihedral[5]), float(dihedral[6])] for dihedral in dihedral_info}
-        dihedrals2 = {"{}-{}-{}-{}".format(dihedral[3], dihedral[2], dihedral[1], dihedral[0]) : [int(dihedral[4]), float(dihedral[5]), float(dihedral[6])] for dihedral in dihedral_info}
+        for dihedral in dihedral_info:
+            d_key = "{}-{}-{}-{}".format(dihedral[0], dihedral[1], dihedral[2], dihedral[3])
+            d_key_invert = "{}-{}-{}-{}".format(dihedral[3], dihedral[2], dihedral[1], dihedral[0])
+            if d_key in dihedrals.keys():
+                dihedrals[d_key] += [int(dihedral[4]), float(dihedral[5]), float(dihedral[6])]
+                dihedrals[d_key_invert] += [int(dihedral[4]), float(dihedral[5]), float(dihedral[6])]
+            else:
+                dihedrals[d_key] = [[int(dihedral[4]), float(dihedral[5]), float(dihedral[6])]]
+                dihedrals2[d_key_invert] = [[int(dihedral[4]), float(dihedral[5]), float(dihedral[6])]]
         self.dihedraltypes = {**dihedrals, **dihedrals2}
 
     def check_bond_parameters(self, inp, lig1or2):
