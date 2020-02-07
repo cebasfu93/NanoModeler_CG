@@ -37,7 +37,7 @@ def gro_writer(TMP, np_xyz, inp):
     f.write("{:>10.5f} {:>10.5f} {:>10.5f}".format(10,10,10))
     f.close()
 
-def top_writer(TMP, np_xyz, lig_bonds, lig_angles, lig_dihedrals, inp, params):
+def top_writer(TMP, np_xyz, core_bonds, lig_bonds, lig_angles, lig_dihedrals, inp, params):
     n_at1 = np.sum(inp.lig1_n_per_bead)
     n_at2 = np.sum(inp.lig2_n_per_bead)
     n_core = int(len(np_xyz) - inp.lig1_num*n_at1 - inp.lig2_num*n_at2)
@@ -87,6 +87,13 @@ def top_writer(TMP, np_xyz, lig_bonds, lig_angles, lig_dihedrals, inp, params):
     logger.info("\tWriting [ bonds ]...")
     f.write("\n[ bonds ]\n")
     f.write(";  ai    aj funct           c0           c1\n")
+    for bond in core_bonds:
+        at1 = bond[0] + 1
+        at2 = bond[1] + 1
+        b_key = "{}-{}".format(btypes[bond[0]], btypes[bond[1]])
+        b_top = params.bondtypes[b_key]
+        f.write("{:>5d} {:>5d} {:>6d} {:>13.5f} {:>13.1f} ; core EN\n".format(at1, at2, 1, 2*inp.bead_radius, inp.core_en_k))
+
     for bond in lig_bonds[0]:
         at1 = bond[0] + 1
         at2 = bond[1] + 1

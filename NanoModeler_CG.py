@@ -166,7 +166,7 @@ def NanoModeler_CG(BEAD_RADIUS=None,
         logger.info("Assigning bonded interactions within the ligands...")
         lig_bonds, lig_angles, lig_dihedrals = get_lig_bonded_atoms(np_xyz, inp)
         logger.info("Writing topology file (.top)...")
-        top_writer(TMP, np_xyz, lig_bonds, lig_angles, lig_dihedrals, inp, params)
+        top_writer(TMP, np_xyz, core_bonds, lig_bonds, lig_angles, lig_dihedrals, inp, params)
     else:
         warn_txt = "ATTENTION. Parameter file not found. Only writing nanoparticle structure..."
         logger.warning(warn_txt)
@@ -192,7 +192,7 @@ if __name__ == "__main__":
     CORE_PYRAMID=[5,5], #Base edge and height respectively. Only read if CORE_SHAPE is "pyramid"
     CORE_OCTAHEDRON_EDGE=6, #Edge size of a regular octahedron. Only read if CORE_SHAPE is "octahedron"
     CORE_BTYPE="C1",
-    CORE_EN=False,
+    CORE_EN=True,
     CORE_EN_K=5000,
 
     GRAFT_DENSITY=0.152, #0.216nm2 thiol-1
