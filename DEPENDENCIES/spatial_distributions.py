@@ -6,6 +6,9 @@ logger = logging.getLogger('nanomodelercg')
 logger.addHandler(logging.NullHandler())
 
 def primitive(inp):
+    """
+    Replicates a primitive unit cell in all directions
+    """
     logger.info("\tConstructing lattice from primitive unit cell...")
     const = inp.bead_radius*2
     cells_per_side = int((((2*inp.char_radius)//const)+1)//2*2+1)
@@ -25,6 +28,9 @@ def primitive(inp):
     return xyz
 
 def bcc(inp):
+    """
+    Replicates a body-centered cubic unit cell in all directions
+    """
     logger.info("\tConstructing lattice from BCC unit cell...")
     const = inp.bead_radius*4/np.sqrt(3)
     cells_per_side = int((((2*inp.char_radius)//const)+1)//2*2+1)
@@ -45,6 +51,9 @@ def bcc(inp):
     return xyz
 
 def fcc(inp):
+    """
+    Replicates a face-centered cubic unit cell in all directions
+    """
     logger.info("\tConstructing lattice from FCC unit cell...")
     const = inp.bead_radius*np.sqrt(8)
     cells_per_side = int((((2*inp.char_radius)//const)+1)//2*2+1)
@@ -65,6 +74,9 @@ def fcc(inp):
     return xyz
 
 def hcp(inp):
+    """
+    Replicates a hexagonal closely packed unit cell in all directions
+    """
     logger.info("\tConstructing lattice from HCP unit cell...")
     const = inp.bead_radius * 2
     cells_per_side = int(((2*inp.char_radius)//const)//2*2)+3
@@ -102,6 +114,9 @@ def hcp(inp):
     return xyz
 
 def gkeka_method(a, inp):
+    """
+    Generates a hollow sphere of beads assuming the protocol implemented by Gkeka
+    """
     rft = []
     N_count = 0
     d = np.sqrt(a)
@@ -121,6 +136,9 @@ def gkeka_method(a, inp):
     return N_count, gkeka_sphere
 
 def shell(block, inp):
+    """
+    Finds the best number of beads that result in the Gkeka sphere with an area per bead a close as possible as the theoretical value 
+    """
     logger.info("\tConstructing hollow shell from concentric rings...")
     ens, diffs = [], []
     a_ini = inp.bead_radius**2

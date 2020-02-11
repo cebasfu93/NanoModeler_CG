@@ -5,6 +5,9 @@ logger = logging.getLogger('nanomodelercg')
 logger.addHandler(logging.NullHandler())
 
 class Input:
+    """
+    Object containing all the information of the target nanoparticle. Most of the attributes are parsed by the user but others are determined after assembling the core
+    """
     def __init__(self,
     bead_radius, core_radius, core_method, core_density, core_shape, core_cylinder, core_ellipse_axis, core_rect_prism, core_rod_params, core_pyramid, core_octahedron, core_btype, core_en, core_en_k,
     graft_density,
@@ -12,6 +15,9 @@ class Input:
     lig2_n_per_bead, lig2_btypes, lig2_charges, lig2_masses,
     morph, rsd, stripes,
     parameter_file):
+        """
+        Initializes all the parameters parsed by the user
+        """
 
         self.bead_radius = bead_radius
 
@@ -81,6 +87,9 @@ class Input:
         self.lig2_num = None
 
     def calculate_area(self):
+        """
+        Calculates the surface area of the nanoparticle's core given its shape and dimensions
+        """
         if self.core_shape == "sphere" or self.core_shape == "shell":
             area = 4.*np.pi*self.core_radius**2
         elif self.core_shape == "ellipsoid":
@@ -101,6 +110,9 @@ class Input:
         return area
 
     def calculate_volume(self):
+        """
+        Calculates the volume of the nanoparticle's core given its shape and dimensions
+        """
         if self.core_shape == "sphere" or self.core_shape == "shell":
             volume = 4./3*np.pi*self.core_radius**3
         elif self.core_shape == "ellipsoid":
@@ -118,6 +130,9 @@ class Input:
         return volume
 
     def characterize_core(self, core_xyz):
+        """
+        Characterized the core after it is cut. That is, t determines the characteristic radius, surface area, volume, and number of ligands
+        """
         logger.info("\tCharacterizing the core...")
         self.char_radius = np.max(np.linalg.norm(core_xyz, axis=1))
         logger.info("\tCalculating volume of the core...")
@@ -140,7 +155,13 @@ class Input:
         logger.info("\t\tNumber of ligands 2: {}".format(self.lig2_num))
 
 class Parameters:
+    """
+    Class containing all the bonded parameters in the parameter file passed by the user
+    """
     def __init__(self, parameter_file):
+        """
+        Reads the parameter files and generates dictionaries to store the parameters of each kind of bonded interaction (i.e. bond, angles, and dihedrals)
+        """
         fl = parameter_file.readlines()
 
         bondtypes_section = False
@@ -207,6 +228,9 @@ class Parameters:
         self.dihedraltypes = dihedrals
 
     def check_bond_parameters(self, inp, lig1or2):
+        """
+        Determines if there are any missing bond parameters according to the pairs available in the parameters file
+        """
         lig_btypes = build_lig_btypes_list_n(inp, lig1or2)
         bond_checks = ["{}-{}".format(a1, a2) in self.bondtypes.keys() for a1, a2 in zip(lig_btypes[:-1], lig_btypes[1:])]
         if np.any(np.invert(bond_checks)):
@@ -216,6 +240,9 @@ class Parameters:
             logger.warning(warn_txt)
 
     def check_angle_parameters(self, inp, lig1or2):
+        """
+        Determines if there are any missing angle parameters according to the triplets available in the parameters file
+        """
         lig_btypes = build_lig_btypes_list_n(inp, lig1or2)
         angle_checks = ["{}-{}-{}".format(a1, a2, a3) in self.angletypes.keys() for a1, a2, a3 in zip(lig_btypes[:-2], lig_btypes[1:-1], lig_btypes[2:])]
         if np.any(np.invert(angle_checks)):
@@ -225,6 +252,9 @@ class Parameters:
             logger.warning(warn_txt)
 
     def check_dihedral_parameters(self, inp, lig1or2):
+        """
+        Determines if there are any missing dihedral parameters according to the quadruplets available in the parameters file
+        """
         lig_btypes = build_lig_btypes_list_n(inp, lig1or2)
         dihedral_checks = ["{}-{}-{}-{}".format(a1, a2, a3, a4) in self.dihedraltypes.keys() for a1, a2, a3, a4 in zip(lig_btypes[:-3], lig_btypes[1:-2], lig_btypes[2:-1], lig_btypes[3:])]
         if np.any(np.invert(dihedral_checks)):
@@ -234,6 +264,9 @@ class Parameters:
             logger.warning(warn_txt)
 
     def check_missing_parameters(self, inp):
+        """
+        Determines if there are any missing bonded parameters for considering the size of each ligand and all the possible tuples, triplets, and quadruplets that their bead types form
+        """
         n_at1 = np.sum(inp.lig1_n_per_bead)
         n_at2 = np.sum(inp.lig2_n_per_bead)
 
@@ -257,6 +290,9 @@ class Parameters:
                 self.check_dihedral_parameters(inp, "2")
 
 def build_lig_btypes_list_n(inp, lig1or2):
+    """
+    Builds list with all the bead types (with repetition) present in a given ligand
+    """
     if lig1or2 == "1":
         lig_btypes = inp.lig1_btypes*1
         lig_n_per_bead = inp.lig1_n_per_bead*1
@@ -269,18 +305,27 @@ def build_lig_btypes_list_n(inp, lig1or2):
     return lig_btypes_list
 
 def center(objeto):
+    """
+    Centers the parsed coordinates at their centroid
+    """
     COM = np.average(objeto, axis=0)
     for i in range(len(objeto)):
         objeto[i,:] = objeto[i,:] - COM
     return objeto
 
 def hcp_xyz(h,k,l):
+    """
+    Returns the position of a bead in an hcp lattice as a multiple of the lattice's edge size given the Miller indices
+    """
     x = 2*h+(k+l)%2
     y = np.sqrt(3)*(k+l%2/3)
     z = 2*np.sqrt(6)/3*l
     return [x, y, z]
 
 def sunflower_pts(num_pts):
+    """
+    Places points on a sphere according to the sunflower algorithm
+    """
     indices = np.arange(0, num_pts, dtype=float) + 0.5
 
     phi = np.arccos(1 - 2*indices/num_pts)
@@ -291,6 +336,9 @@ def sunflower_pts(num_pts):
     return xyz
 
 def cartesian_to_polar(xyz):
+    """
+    Converts cartesian coordinates (x,y,z) to spherical coordinates (r, phi, theta). Phi is constrained between -pi and pi. Theta is constrained between 0 and pi
+    """
     ptsnew = np.zeros(np.shape(xyz))
     xy = xyz[:,0]**2 + xyz[:,1]**2
     ptsnew[:,0] = np.sqrt(xy + xyz[:,2]**2) #r
@@ -299,6 +347,9 @@ def cartesian_to_polar(xyz):
     return ptsnew
 
 def polar_to_cartesian(rft):
+    """
+    Converts spherical coordinates (r, phi, theta) to cartesian coordinates
+    """
     ptsnew = np.zeros(np.shape(rft))
     ptsnew[:,0] = rft[:,0]*np.cos(rft[:,1])*np.sin(rft[:,2])
     ptsnew[:,1] = rft[:,0]*np.sin(rft[:,1])*np.sin(rft[:,2])
@@ -306,6 +357,9 @@ def polar_to_cartesian(rft):
     return ptsnew
 
 def merge_coordinates(core_xyz, lig_xyz):
+    """
+    Stacks the coordinates of the core with those of the ligands
+    """
     if lig_xyz[1] != []:
         np_xyz = np.vstack((core_xyz, lig_xyz[0], lig_xyz[1]))
     else:

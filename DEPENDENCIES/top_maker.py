@@ -6,6 +6,9 @@ logger = logging.getLogger('nanomodelercg')
 logger.addHandler(logging.NullHandler())
 
 def get_core_bonds(core_xyz, inp):
+    """
+    Determines the atom indices of the core that are to be involved in an elastic network (nearest neighbors except for shells)
+    """
     core_bonds = []
 
     if inp.core_en:
@@ -36,6 +39,9 @@ def get_core_bonds(core_xyz, inp):
     return core_bonds
 
 def get_lig_bonded_atoms(np_xyz, inp):
+    """
+    Determines the atom indices of the ligands that are to be involved in bonds, angles, and dihedrals
+    """
     logger.info("\tAssigning bonds within the ligands...")
     lig_bonds = get_lig_bonds(np_xyz, inp)
     logger.info("\tAssigning angles within the ligands...")
@@ -46,6 +52,9 @@ def get_lig_bonded_atoms(np_xyz, inp):
     return lig_bonds, lig_angles, lig_dihedrals
 
 def get_lig_bonds(np_xyz, inp):
+    """
+    Determines the atom indices of the ligands that are to be involved in bonds
+    """
     n_at1, n_at2 = np.sum(inp.lig1_n_per_bead), np.sum(inp.lig2_n_per_bead)
     n_core = int(len(np_xyz) - inp.lig1_num*n_at1 - inp.lig2_num*n_at2)
     core_xyz = np_xyz[:n_core]
@@ -79,6 +88,9 @@ def get_lig_bonds(np_xyz, inp):
     return (lig1_bonds, lig2_bonds)
 
 def get_lig_angles(np_xyz, inp):
+    """
+    Determines the atom indices of the ligands that are to be involved in angles
+    """
     n_at1, n_at2 = np.sum(inp.lig1_n_per_bead), np.sum(inp.lig2_n_per_bead)
     n_core = int(len(np_xyz) - inp.lig1_num*n_at1 - inp.lig2_num*n_at2)
     core_xyz = np_xyz[:n_core]
@@ -119,6 +131,9 @@ def get_lig_angles(np_xyz, inp):
     return (lig1_angles, lig2_angles)
 
 def get_lig_dihedrals(np_xyz, inp):
+    """
+    Determines the atom indices of the ligands that are to be involved in dihedrals
+    """
     n_at1, n_at2 = np.sum(inp.lig1_n_per_bead), np.sum(inp.lig2_n_per_bead)
     n_core = int(len(np_xyz) - inp.lig1_num*n_at1 - inp.lig2_num*n_at2)
     core_xyz = np_xyz[:n_core]

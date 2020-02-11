@@ -8,10 +8,16 @@ logger = logging.getLogger('nanomodelercg')
 logger.addHandler(logging.NullHandler())
 
 def sphere_cons(xyz, rad):
+    """
+    Returns the difference between the norm of the parsed vector and the target radius
+    """
     zero = np.linalg.norm(xyz) - rad
     return zero
 
 def calc_Q(xyz, staples, ndx):
+    """
+    Returns the sum of the reciprocal distances. This scales as the electrostatic potential energy of charges on a sphere
+    """
     staples[ndx] = xyz
     dists = cdist(staples, staples)
     dists = dists[dists!=0]
@@ -19,6 +25,9 @@ def calc_Q(xyz, staples, ndx):
     return Q
 
 def electric_minimization(xyz):
+    """
+    Modifies points on a sphere to minimize their electrostatic potential energy
+    """
     logger.info("\tMinimizing points on a sphere...")
     R_model = np.linalg.norm(xyz[0])
     max_iter = 100 #this value is an arbitrary value to avoid getting stuck in a loop
@@ -38,6 +47,9 @@ def electric_minimization(xyz):
     return xyz
 
 def place_staples(core_xyz, inp):
+    """
+    Return the position of the core beads where to place ligands and the vectors normal to the core's shape at such points
+    """
     d_thres = 2*inp.bead_radius+0.01 #threshold to find neighbors to calculate normals to surface
 
     virtual_xyz = sunflower_pts(inp.n_tot_lig)*(inp.char_radius + 2*inp.bead_radius)
@@ -77,7 +89,6 @@ def place_staples(core_xyz, inp):
 
     logger.info("\tSaving normal directions to the surface at the anchoring sites...")
     normals = np.zeros((inp.n_tot_lig, 3))
-    #staples_xyz = np.empty((inp.n_tot_lig, 3))
     dists = cdist(staples_xyz, core_xyz)
     sort_dists = np.sort(dists, axis=1)
     for i, xyz in enumerate(staples_xyz):
@@ -90,10 +101,12 @@ def place_staples(core_xyz, inp):
             normals[i] = normal/norm
         else:
             normals[i] = xyz/np.linalg.norm(xyz)
-        #staples_xyz[i] = xyz+2*inp.bead_radius*normals[i]
     return staples_xyz, normals
 
 def assign_morphology(staples_xyz, inp):
+    """
+    Assigns both ligands to the different staples according to the specified target morphology. It returns the indexes of the staples belonging to each ligand
+    """
     indexes = list(range(inp.n_tot_lig))
 
     if inp.morph == 'janus_x' or inp.morph == "stripe_x":
@@ -136,6 +149,9 @@ def assign_morphology(staples_xyz, inp):
 
 
 def grow_one_ligands(staples_xyz, staples_normals, single_lig_ndx, inp, params, lig1or2):
+    """
+    Return the xyz coordinates of a ligand
+    """
     if lig1or2 == "1":
         lig_btypes = inp.lig1_btypes
         lig_n_per_bead = inp.lig1_n_per_bead
@@ -165,13 +181,15 @@ def grow_one_ligands(staples_xyz, staples_normals, single_lig_ndx, inp, params, 
         for i in range(len(lig_n_per_bead)):
             for j in range(lig_n_per_bead[i]):
                 distance_to_bead = np.sum(inter_bead_distances[:current_bead])
-                #xyz = staples_xyz[ndx]*(norma + distance_to_bead)/norma
                 xyz = staples_xyz[ndx] + staples_normals[ndx]*distance_to_bead
                 lig_xyz.append(xyz)
                 current_bead += 1
     return lig_xyz
 
 def grow_ligands(staples_xyz, staples_normals, lig_ndx, inp, params):
+    """
+    Determines the xyz coordinates of all the beads of both ligands
+    """
     logger.info("\tGrowing ligand 1 from the respective anchoring sites...")
     lig1_xyz = grow_one_ligands(staples_xyz, staples_normals, lig_ndx[0], inp, params, "1")
     logger.info("\tGrowing ligand 2 from the respective anchoring sites...")
