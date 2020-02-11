@@ -154,11 +154,11 @@ def NanoModeler_CG(BEAD_RADIUS=None,
 
     #######LIGANDS#######
     logger.info("Placing ligand anchoring sites...")
-    staples_xyz = place_staples(core_xyz, inp)
+    staples_xyz, staples_normals = place_staples(core_xyz, inp)
     logger.info("Labeling ligands to anchoring sites...")
     lig_ndx = assign_morphology(staples_xyz, inp)
     logger.info("Growing ligands...")
-    lig_xyz = grow_ligands(staples_xyz, lig_ndx, inp, params)
+    lig_xyz = grow_ligands(staples_xyz, staples_normals, lig_ndx, inp, params)
     logger.info("Merging core with ligands...")
     np_xyz = merge_coordinates(core_xyz, lig_xyz)
     logger.info("Writing structure file (.gro)...")

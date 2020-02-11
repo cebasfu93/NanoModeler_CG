@@ -73,14 +73,14 @@ def place_staples(core_xyz, inp):
                     #print(D)
                 close_ndxs.append(test_ndx)
             D += 1
-    closests = core_xyz[close_ndxs]
+    staples_xyz = core_xyz[close_ndxs]
 
     logger.info("\tSaving normal directions to the surface at the anchoring sites...")
     normals = np.zeros((inp.n_tot_lig, 3))
-    staples_xyz = np.empty((inp.n_tot_lig, 3))
-    dists = cdist(closests, core_xyz)
+    #staples_xyz = np.empty((inp.n_tot_lig, 3))
+    dists = cdist(staples_xyz, core_xyz)
     sort_dists = np.sort(dists, axis=1)
-    for i, xyz in enumerate(closests):
+    for i, xyz in enumerate(staples_xyz):
         if inp.core_shape != "shell":
             neigh_ndx = np.where(dists[i] <= d_thres)[0]
             neighbors = core_xyz[neigh_ndx]
@@ -90,8 +90,8 @@ def place_staples(core_xyz, inp):
             normals[i] = normal/norm
         else:
             normals[i] = xyz/np.linalg.norm(xyz)
-        staples_xyz[i] = xyz+2*inp.bead_radius*normals[i]
-    return staples_xyz
+        #staples_xyz[i] = xyz+2*inp.bead_radius*normals[i]
+    return staples_xyz, normals
 
 def assign_morphology(staples_xyz, inp):
     indexes = list(range(inp.n_tot_lig))
@@ -135,7 +135,7 @@ def assign_morphology(staples_xyz, inp):
     return (lig1_ndx, lig2_ndx)
 
 
-def grow_one_ligands(staples_xyz, single_lig_ndx, inp, params, lig1or2):
+def grow_one_ligands(staples_xyz, staples_normals, single_lig_ndx, inp, params, lig1or2):
     if lig1or2 == "1":
         lig_btypes = inp.lig1_btypes
         lig_n_per_bead = inp.lig1_n_per_bead
@@ -143,30 +143,38 @@ def grow_one_ligands(staples_xyz, single_lig_ndx, inp, params, lig1or2):
         lig_btypes = inp.lig2_btypes
         lig_n_per_bead = inp.lig2_n_per_bead
 
-    list_btypes = [inp.core_btype] + [[lig_btypes[i]]*lig_n_per_bead[i] for i in range(len(lig_btypes))]
+    list_btypes = [inp.core_btype]
+    for i in range(len(lig_btypes)):
+        list_btypes += [lig_btypes[i]]*lig_n_per_bead[i]
+    print(list_btypes)
+
     if params != None:
         inter_bead_distances = []
         for a1, a2 in zip(list_btypes[:-1], list_btypes[1:]):
             key = "{}-{}".format(a1,a2)
-            inter_bead_distances.append(params.bondtypes.get(key, 2*inp.bead_radius))
+            if key in params.bondtypes.keys():
+                inter_bead_distances.append(params.bondtypes[key][1])
+            else:
+                inter_bead_distances.append(2*inp.bead_radius)
     else:
         inter_bead_distances = [2*inp.bead_radius]*(len(list_btypes)-1)
 
     lig_xyz = []
     for ndx in single_lig_ndx:
+        norma = np.linalg.norm(staples_xyz[ndx])
         current_bead = 1
-        for i in range(len(lig_btypes)):
-            for n_per_bead in range(lig_n_per_bead[i]):
-                norma = np.linalg.norm(staples_xyz[ndx])
+        for i in range(len(lig_n_per_bead)):
+            for j in range(lig_n_per_bead[i]):
                 distance_to_bead = np.sum(inter_bead_distances[:current_bead])
-                xyz = staples_xyz[ndx]*(norma + distance_to_bead)/norma
+                #xyz = staples_xyz[ndx]*(norma + distance_to_bead)/norma
+                xyz = staples_xyz[ndx] + staples_normals[ndx]*distance_to_bead
                 lig_xyz.append(xyz)
                 current_bead += 1
     return lig_xyz
 
-def grow_ligands(staples_xyz, lig_ndx, inp, params):
+def grow_ligands(staples_xyz, staples_normals, lig_ndx, inp, params):
     logger.info("\tGrowing ligand 1 from the respective anchoring sites...")
-    lig1_xyz = grow_one_ligands(staples_xyz, lig_ndx[0], inp, params, "1")
+    lig1_xyz = grow_one_ligands(staples_xyz, staples_normals, lig_ndx[0], inp, params, "1")
     logger.info("\tGrowing ligand 2 from the respective anchoring sites...")
-    lig2_xyz = grow_one_ligands(staples_xyz, lig_ndx[1], inp, params, "2")
+    lig2_xyz = grow_one_ligands(staples_xyz, staples_normals, lig_ndx[1], inp, params, "2")
     return (lig1_xyz, lig2_xyz)
