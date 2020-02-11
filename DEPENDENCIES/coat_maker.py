@@ -146,7 +146,6 @@ def grow_one_ligands(staples_xyz, staples_normals, single_lig_ndx, inp, params, 
     list_btypes = [inp.core_btype]
     for i in range(len(lig_btypes)):
         list_btypes += [lig_btypes[i]]*lig_n_per_bead[i]
-    print(list_btypes)
 
     if params != None:
         inter_bead_distances = []

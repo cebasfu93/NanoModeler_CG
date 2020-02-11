@@ -186,7 +186,7 @@ if __name__ == "__main__":
     CORE_RADIUS=1.5,
     CORE_METHOD="fcc",
     CORE_DENSITY=19.3, #g/cm3 of the material
-    CORE_SHAPE="sphere",
+    CORE_SHAPE="rectangular prism",
     CORE_CYLINDER=[2.5,4], #Radius and length respectively. Only read if CORE_SHAPE is "cylinder"
     CORE_ELLIPSE_AXIS=[1.5,3,4.5], #Only read if CORE_SHAPE is "ellipsoid"
     CORE_RECT_PRISM=[2,4,6], #Only read if CORE_SHAPE is "rectangular prism"

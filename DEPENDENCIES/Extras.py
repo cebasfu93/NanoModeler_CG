@@ -89,7 +89,7 @@ class Input:
         elif self.core_shape == "cylinder":
             area = 2*np.pi*self.core_cylinder[0]*(self.core_cylinder[0]+ self.core_cylinder[1])
         elif self.core_shape == "rectangular prism":
-            axa, axb, axc = self.rectangular_prism
+            axa, axb, axc = self.core_rect_prism
             area = 2*(axa*axb + axa*axc + axb*axc)
         elif self.core_shape == "rod":
             area = 2*np.pi*self.core_rod_params[0]*(2*self.core_rod_params[0] + self.core_rod_params[1])
@@ -108,7 +108,7 @@ class Input:
         elif self.core_shape == "cylinder":
             volume = np.pi*self.core_cylinder[0]**2*self.core_cylinder[1]
         elif self.core_shape == "rectangular prism":
-            volume = np.prod(self.rectangular_prism)
+            volume = np.prod(self.core_rect_prism)
         elif self.core_shape == "rod":
             volume = np.pi*self.core_rod_params[0]**2*self.core_rod_params[1] + 4./3*np.pi*self.core_rod_params[1]**3
         elif self.core_shape == "pyramid":
