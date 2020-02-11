@@ -11,7 +11,7 @@ def get_core_bonds(core_xyz, inp):
     if inp.core_en:
         dists = cdist(core_xyz, core_xyz)
         if inp.core_shape != "shell":
-            logger.info("\tBuilding elastic network based on first neighbours...")
+            logger.info("\tBuilding elastic network based on first neighbors...")
             close_dists = dists <= (2*inp.bead_radius+0.01)
             for i in range(len(dists)):
                 ndx1 = i*1

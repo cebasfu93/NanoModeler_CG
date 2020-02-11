@@ -115,17 +115,6 @@ def NanoModeler_CG(BEAD_RADIUS=None,
     for key, value in inp.__dict__.items():
         logger.info("\t{:<20}  {:<60}".format(key, str(value)))
 
-    if inp.parameter_file != None:
-        logger.info("User provided a topology file...")
-        logger.info("Importing parameters...")
-        params = Parameters(inp.parameter_file)
-        logger.info("Looking for missing parameters...")
-        params.check_missing_parameters(inp)
-    else:
-        params = None
-        warn_txt = "ATTENTION. Parameter file not found. Only writing nanoparticle structure..."
-        logger.warning(warn_txt)
-
     core_packing_functions = {'primitive': primitive,
     'bcc': bcc,
     'fcc': fcc,
@@ -144,7 +133,7 @@ def NanoModeler_CG(BEAD_RADIUS=None,
     #######CORE#######
     logger.info("Building lattice block...")
     packed_block = core_packing_functions[inp.core_method](inp)
-    logger.info("Croping block into target shape...")
+    logger.info("Cropping block into target shape...")
     if inp.core_shape != 'shape':
         core_xyz = core_shape_functions[inp.core_shape](packed_block, inp)
     else:
@@ -152,13 +141,24 @@ def NanoModeler_CG(BEAD_RADIUS=None,
     logger.info("Describing the cut shape...")
     inp.characterize_core(core_xyz)
 
+    if inp.parameter_file != None:
+        logger.info("User provided a topology file...")
+        logger.info("Importing parameters...")
+        params = Parameters(inp.parameter_file)
+        logger.info("Looking for missing parameters...")
+        params.check_missing_parameters(inp)
+    else:
+        params = None
+        warn_txt = "ATTENTION. Parameter file not found. Only writing nanoparticle structure..."
+        logger.warning(warn_txt)
+
     #######LIGANDS#######
     logger.info("Placing ligand anchoring sites...")
-    staples_xyz, staples_normals = place_staples(core_xyz, inp)
-    logger.info("Labeling ligands to anchoring site...")
+    staples_xyz = place_staples(core_xyz, inp)
+    logger.info("Labeling ligands to anchoring sites...")
     lig_ndx = assign_morphology(staples_xyz, inp)
     logger.info("Growing ligands...")
-    lig_xyz = grow_ligands(staples_xyz, staples_normals, lig_ndx, inp, params)
+    lig_xyz = grow_ligands(staples_xyz, lig_ndx, inp, params)
     logger.info("Merging core with ligands...")
     np_xyz = merge_coordinates(core_xyz, lig_xyz)
     logger.info("Writing structure file (.gro)...")
@@ -211,7 +211,7 @@ if __name__ == "__main__":
     LIG2_MASSES=[],
 
     MORPHOLOGY='random', #random, janus_x, janus_y, janus_z, stripe_x, stripe_y, stripe_z
-    RSEED=2,# None
+    RSEED=666,# None
     STRIPES=4,
 
     PARAMETER_FILE=open('PEG.itp', 'r'))
