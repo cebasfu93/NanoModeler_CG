@@ -40,6 +40,67 @@ def NanoModeler_CG(BEAD_RADIUS=None,
     RSEED=None,
     STRIPES=None,
     PARAMETER_FILE=None):
+    """
+    ----------------------
+    Parameters:
+    ----------------------
+    BEAD_RADIUS: float
+        Radius (nm) of the beads conforming the core
+    CORE_RADIUS: float
+        Radius (nm) of the core when the shape is set to 'sphere' or 'shell'
+    CORE_METHOD: str
+        Lattice to use for the building of the core. primitive, bcc, fcc, hcp, shell
+    CORE_DENSITY: float
+        Density (g cm-3) of the bulk material conforming the core
+    CORE_SHAPE: str
+        Shape to cut the lattice. sphere, cylinder, ellipsoid, rectangular prism, rod, pyramid, octahedron
+    CORE_CYLINDER: list of float
+        Radius and length (nm) of the core when the shape is set to 'cylinder'
+    CORE_ELLIPSE_AXIS: list of float
+        The x, y, and z principal axis (nm) of the core when the shape is set to ellipsoid
+    CORE_RECT_PRISM: list of float
+        The x, y, and z edge-lengths (nm) of the core when the shape is set to rectangular prism
+    CORE_ROD_PARAMS: list of float
+        Cap radius and cylinder length (nm) of the core when the shape is set to rod
+    CORE_PYRAMID: list of float
+        Base edge-length and height (nm) of the core when the shape is set to pyramid
+    CORE_OCTAHEDRON_EDGE: float
+        Edge-length (nm) of the core when the shape is set to octahedron
+    CORE_BTYPE: str
+        Bead type to assign to the core beads
+    CORE_EN: bool
+        Whether or not to include an elastic network on the core's beads
+    CORE_EN_K: float
+        Elastic constant (kJ nm-2 mol-1) of the cores network
+    GRAFT_DENSITY: float
+        Area occupied per ligand (nm2)
+    LIG1_N_PER_BEAD: list of int
+        Number of times to repeat each bead type of ligand 1
+    LIG1_BTYPES: list of str
+        Bead types (in the right order) of the beads conforming ligand 1
+    LIG1_CHARGES: list of float
+        Partial charges (e) assigned to each bead type present in ligand 1
+    LIG1_MASSES: list of float
+        Mass (u.m.a) assigned to each bead type present in ligand 1
+    LIG1_FRAC: float
+        Value between 0 and 1 representing the fraction of total ligands that should be assigned to ligand 1
+    LIG2_N_PER_BEAD: list of int
+        Number of times to repeat each bead type of ligand 2
+    LIG2_BTYPES: list of str
+        Bead types (in the right order) of the beads conforming ligand 2
+    LIG2_CHARGES: list of float
+        Partial charges (e) assigned to each bead type present in ligand 2
+    LIG2_MASSES: list of float
+        Mass (u.m.a) assigned to each bead type present in ligand 2
+    MORPHOLOGY: str
+        Arrangement on which to place the ligands. homogeneous, random, janus_x, janus_y, janus_z, stripe_x, stripe_y, stripe_z
+    RSEED: int
+        Random seed used to generate a random morphology. -1 assigns a random seed
+    STRIPES: int
+        Number of stripes to assign when the morphology is set to stripe*
+    PARAMETER_FILE: reader
+        File containing the [ bondtypes ], [ angletypes ], and [ dihedraltypes ] directives for the bonded interactions present in the system
+    """
 
     logger.info("WELCOME TO NANOMODELER CG")
     logger.info("Importing tempfile library...")
