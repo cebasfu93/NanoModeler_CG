@@ -115,6 +115,17 @@ def NanoModeler_CG(BEAD_RADIUS=None,
     for key, value in inp.__dict__.items():
         logger.info("\t{:<20}  {:<60}".format(key, str(value)))
 
+    if inp.parameter_file != None:
+        logger.info("User provided a topology file...")
+        logger.info("Importing parameters...")
+        params = Parameters(inp.parameter_file)
+        logger.info("Looking for missing parameters...")
+        params.check_missing_parameters(inp)
+    else:
+        params = None
+        warn_txt = "ATTENTION. Parameter file not found. Only writing nanoparticle structure..."
+        logger.warning(warn_txt)
+
     core_packing_functions = {'primitive': primitive,
     'bcc': bcc,
     'fcc': fcc,
@@ -147,29 +158,20 @@ def NanoModeler_CG(BEAD_RADIUS=None,
     logger.info("Labeling ligands to anchoring site...")
     lig_ndx = assign_morphology(staples_xyz, inp)
     logger.info("Growing ligands...")
-    lig_xyz = grow_ligands(staples_xyz, staples_normals, lig_ndx, inp)
+    lig_xyz = grow_ligands(staples_xyz, staples_normals, lig_ndx, inp, params)
     logger.info("Merging core with ligands...")
     np_xyz = merge_coordinates(core_xyz, lig_xyz)
-
     logger.info("Writing structure file (.gro)...")
     gro_writer(TMP, np_xyz, inp)
 
     #######TOPOLOGY#######
     if inp.parameter_file != None:
-        logger.info("User provided a topology file...")
-        logger.info("Importing parameters...")
-        params = Parameters(inp.parameter_file)
-        logger.info("Looking for missing parameters...")
-        params.check_missing_parameters(inp)
         logger.info("Assigning bonds within the core...")
         core_bonds = get_core_bonds(core_xyz, inp)
         logger.info("Assigning bonded interactions within the ligands...")
         lig_bonds, lig_angles, lig_dihedrals = get_lig_bonded_atoms(np_xyz, inp)
         logger.info("Writing topology file (.top)...")
         top_writer(TMP, np_xyz, core_bonds, lig_bonds, lig_angles, lig_dihedrals, inp, params)
-    else:
-        warn_txt = "ATTENTION. Parameter file not found. Only writing nanoparticle structure..."
-        logger.warning(warn_txt)
 
     loggerFileHandler.flush()
     logger.handlers.remove(loggerFileHandler)
