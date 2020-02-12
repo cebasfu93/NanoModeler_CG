@@ -360,8 +360,10 @@ def merge_coordinates(core_xyz, lig_xyz):
     """
     Stacks the coordinates of the core with those of the ligands
     """
-    if lig_xyz[1] != []:
-        np_xyz = np.vstack((core_xyz, lig_xyz[0], lig_xyz[1]))
-    else:
+    if lig_xyz[0] == [] and lig_xyz[1] != []:
+        np_xyz = np.vstack((core_xyz, lig_xyz[1]))
+    elif lig_xyz[0] != [] and lig_xyz[1] == []:
         np_xyz = np.vstack((core_xyz, lig_xyz[0]))
+    else:
+        np_xyz = np.vstack((core_xyz, lig_xyz[0], lig_xyz[1]))
     return np_xyz

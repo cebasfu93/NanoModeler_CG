@@ -143,8 +143,12 @@ def assign_morphology(staples_xyz, inp):
         lig1_ndx = indexes[:inp.lig1_num]
         lig2_ndx = indexes[inp.lig1_num:]
     elif inp.morph == 'homogeneous':
-        lig1_ndx = indexes
-        lig2_ndx = []
+        if inp.lig1_num == 1.0:
+            lig1_ndx = indexes
+            lig2_ndx = []
+        else:
+            lig1_ndx = []
+            lig2_ndx = indexes
     return (lig1_ndx, lig2_ndx)
 
 
