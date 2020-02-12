@@ -48,7 +48,7 @@ class Input:
         self.lig2_charges = lig2_charges
         self.lig2_masses = lig2_masses
 
-        if self.lig1_frac == None or self.lig1_frac == 1.0:
+        if self.lig1_frac == None or self.lig1_frac == 1.0 or self.lig1_frac == 0.0:
             self.morph = "homogeneous"
         else:
             self.morph = morph
@@ -297,7 +297,7 @@ def build_lig_btypes_list_n(inp, lig1or2):
         lig_btypes = inp.lig1_btypes*1
         lig_n_per_bead = inp.lig1_n_per_bead*1
     elif lig1or2 == "2":
-        lig_btypes == inp.lig2_btypes*1
+        lig_btypes = inp.lig2_btypes*1
         lig_n_per_bead = inp.lig2_n_per_bead*1
     lig_btypes_list = [inp.core_btype]
     for i in range(len(lig_btypes)):
