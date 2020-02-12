@@ -96,7 +96,6 @@ def top_writer(TMP, np_xyz, core_bonds, lig_bonds, lig_angles, lig_dihedrals, in
         at1 = bond[0] + 1
         at2 = bond[1] + 1
         b_key = "{}-{}".format(btypes[bond[0]], btypes[bond[1]])
-        b_top = params.bondtypes[b_key]
         f.write("{:>5d} {:>5d} {:>6d} {:>13.5f} {:>13.1f} ; core EN\n".format(at1, at2, 1, 2*inp.bead_radius, inp.core_en_k))
 
     for bond in lig_bonds[0]:
