@@ -28,7 +28,6 @@ def gro_writer(TMP, np_xyz, inp):
             ndx = n_core + i*n_at1 + j
             xyz = np_xyz[ndx]
             f.write("{:>5d}{:<5}{:>5}{:>5d}{:>8.3f}{:>8.3f}{:>8.3f}\n".format(res, "LIG1", "A{}".format(j), ndx+1, xyz[0], xyz[1], xyz[2]))
-
     for i in range(inp.lig2_num):
         res = i + inp.lig1_num + 1
         for j in range(n_at2):
@@ -46,7 +45,6 @@ def top_writer(TMP, np_xyz, core_bonds, lig_bonds, lig_angles, lig_dihedrals, in
     n_at1 = np.sum(inp.lig1_n_per_bead)
     n_at2 = np.sum(inp.lig2_n_per_bead)
     n_core = int(len(np_xyz) - inp.lig1_num*n_at1 - inp.lig2_num*n_at2)
-
     btypes = [inp.core_btype]*n_core
     lig1_btypes_list, lig1_charges_list, lig1_masses_list, lig2_btypes_list, lig2_charges_list, lig2_masses_list = [], [], [], [], [], []
     for i in range(len(inp.lig1_btypes)):
@@ -54,7 +52,7 @@ def top_writer(TMP, np_xyz, core_bonds, lig_bonds, lig_angles, lig_dihedrals, in
         lig1_charges_list += [inp.lig1_charges[i]]*inp.lig1_n_per_bead[i]
         lig1_masses_list += [inp.lig1_masses[i]]*inp.lig1_n_per_bead[i]
     for i in range(len(inp.lig2_btypes)):
-        lig2_btypes_list += [inp.lig2_btypes[i]*inp.lig2_n_per_bead[i]]
+        lig2_btypes_list += [inp.lig2_btypes[i]]*inp.lig2_n_per_bead[i]
         lig2_charges_list += [inp.lig2_charges[i]]*inp.lig2_n_per_bead[i]
         lig2_masses_list += [inp.lig2_masses[i]]*inp.lig2_n_per_bead[i]
     btypes = btypes + lig1_btypes_list*inp.lig1_num + lig2_btypes_list*inp.lig2_num
