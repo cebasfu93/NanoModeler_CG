@@ -53,7 +53,7 @@ def place_staples(core_xyz, inp):
     d_thres = 2*inp.bead_radius+0.01 #threshold to find neighbors to calculate normals to surface
 
     virtual_xyz = sunflower_pts(inp.n_tot_lig)*(inp.char_radius + 2*inp.bead_radius)
-    if inp.n_tot_lig <= 20:
+    if inp.n_tot_lig <= 20 and inp.n_tot_lig > 0:
         logger.info("\tAnchors will be placed minimizing electric energy. This will place the ligands as far away as possible from one another...")
         virtual_xyz = electric_minimization(virtual_xyz)
 
@@ -101,6 +101,8 @@ def place_staples(core_xyz, inp):
             normals[i] = normal/norm
         else:
             normals[i] = xyz/np.linalg.norm(xyz)
+    if inp.n_tot_lig == 0:
+        staples_xyz, normals = [], []
     return staples_xyz, normals
 
 def assign_morphology(staples_xyz, inp):
