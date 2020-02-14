@@ -2,6 +2,10 @@ import math
 import numpy
 
 def affine_matrix_from_points(v0, v1, shear=True, scale=True, usesvd=True):
+    """
+    Calculates the quaternion matrix that best converts the v0 array of points into v1. Careful with the shapes of v0 and v1.
+    They are transposed. They must be parsed with shape (3,N) for an xyz-coordinated set of points
+    """
 
     v0 = numpy.array(v0, dtype=numpy.float64, copy=True)
     v1 = numpy.array(v1, dtype=numpy.float64, copy=True)

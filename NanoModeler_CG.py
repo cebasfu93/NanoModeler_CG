@@ -111,8 +111,12 @@ def NanoModeler_CG(BEAD_RADIUS=None,
     import numpy as np
     logger.info("Importing scipy.spatial.distance library...")
     from  scipy.spatial.distance import cdist
+    logger.info("Importing sklearn.decomposition library...")
+    from  sklearn import decomposition
     logger.info("Importing scipy.optimize library...")
     from scipy.optimize import minimize
+    logger.info("Importing transformations library...")
+    import DEPENDENCIES.transformations
     logger.info("Importing private classes...")
     from DEPENDENCIES.Extras import Input, Parameters, center, cartesian_to_polar, polar_to_cartesian, sunflower_pts, merge_coordinates
     logger.info("Importing lattice generators...")
@@ -120,7 +124,7 @@ def NanoModeler_CG(BEAD_RADIUS=None,
     logger.info("Importing shape cutters...")
     from DEPENDENCIES.core_maker import sphere, ellipsoid, cylinder, rectangular_prism, rod, pyramid, octahedron
     logger.info("Importing coating functions...")
-    from DEPENDENCIES.coat_maker import place_staples, assign_morphology, grow_ligands
+    from DEPENDENCIES.coat_maker import place_staples, assign_morphology, place_ligands
     logger.info("Importing topology builder...")
     from DEPENDENCIES.top_maker import get_core_bonds, get_lig_bonded_atoms
     logger.info("Importing writers...")
@@ -219,7 +223,7 @@ def NanoModeler_CG(BEAD_RADIUS=None,
     logger.info("Labeling ligands to anchoring sites...")
     lig_ndx = assign_morphology(staples_xyz, inp)
     logger.info("Growing ligands...")
-    lig_xyz = grow_ligands(staples_xyz, staples_normals, lig_ndx, inp, params)
+    lig_xyz = place_ligands(staples_xyz, staples_normals, lig_ndx, inp, params)
     logger.info("Merging core with ligands...")
     np_xyz = merge_coordinates(core_xyz, lig_xyz)
     logger.info("Writing structure file (.gro)...")

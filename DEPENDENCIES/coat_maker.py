@@ -156,6 +156,9 @@ def assign_morphology(staples_xyz, inp):
     return (lig1_ndx, lig2_ndx)
 
 def get_list_btypes(inp, lig1or2):
+    """
+    Makes a list with the beadtypes of any of the ligands. The first element of the list is the type assigned to the core
+    """
     if lig1or2 == "1":
         lig_btypes = inp.lig1_btypes
         lig_n_per_bead = inp.lig1_n_per_bead
@@ -221,6 +224,9 @@ def grow_ligand(inp, params, lig1or2):
     return xyz
 
 def place_ligands(staples_xyz, staples_normals, lig_ndx, inp, params):
+    """
+    Places the ligands in their right position around the core. That is, it generates a reasonable structure for each ligand and roto-translates them
+    """
     result = []
     pca = PCA(n_components=3)
     for n, ndxs in enumerate(lig_ndx, 1):
