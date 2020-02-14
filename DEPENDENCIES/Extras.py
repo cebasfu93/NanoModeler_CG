@@ -384,3 +384,10 @@ def rot_mat(u, t):
     [x*y*(1-ct)+z*st, ct+y**2*(1-ct), y*z*(1-ct)-x*st],\
     [x*z*(1-ct)-y*st, y*z*(1-ct)+x*st, ct+z**2*(1-ct)]])
     return rot
+
+def print_xyz(xyz, fname):
+    f = open(fname, "w")
+    f.write("{}\n\n".format(len(xyz)))
+    for i, x in enumerate(xyz*10,1):
+        f.write("A{:<3} {:>10.3f} {:>10.3f} {:>10.3f}\n".format(i, *x))
+    f.close()

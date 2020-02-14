@@ -1,5 +1,5 @@
 import numpy as np
-from DEPENDENCIES.Extras import center
+from DEPENDENCIES.Extras import center, print_xyz
 import itertools
 import logging
 
@@ -19,13 +19,6 @@ def primitive(inp):
     xyz = center(xyz)
     #print_xyz(xyz, "core.xyz")
     return xyz
-
-def print_xyz(xyz, fname):
-    f = open(fname, "w")
-    f.write("{}\n\n".format(len(xyz)))
-    for i, x in enumerate(xyz*10,1):
-        f.write("A{:<3} {:>10.3f} {:>10.3f} {:>10.3f}\n".format(i, *x))
-    f.close()
 
 def bcc(inp):
     """
