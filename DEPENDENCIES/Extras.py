@@ -369,3 +369,18 @@ def merge_coordinates(core_xyz, lig_xyz):
     else:
         np_xyz = np.vstack((core_xyz, lig_xyz[0], lig_xyz[1]))
     return np_xyz
+
+def rot_mat(p, u, t):
+    """
+    Rotates xyz-matrix p, around vector u for an angle t
+    """
+    ct = math.cos(t)
+    st = math.sin(t)
+    u = u/np.linalg.norm(u)
+    x = u[0]
+    y = u[1]
+    z = u[2]
+    rot = np.array([[ct + x**2*(1-ct), x*y*(1-ct)-z*st, x*z*(1-ct)+y*st], \
+    [x*y*(1-ct)+z*st, ct+y**2*(1-ct), y*z*(1-ct)-x*st],\
+    [x*z*(1-ct)-y*st, y*z*(1-ct)+x*st, ct+z**2*(1-ct)]])
+    return np.dot(rot, p.T).T
