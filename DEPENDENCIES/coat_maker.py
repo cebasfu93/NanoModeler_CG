@@ -2,6 +2,8 @@ import numpy as np
 from scipy.optimize import minimize
 from  scipy.spatial.distance import cdist
 from DEPENDENCIES.Extras import sunflower_pts, cartesian_to_polar, polar_to_cartesian, rot_mat
+from  DEPENDENCIES.transformations import *
+from sklearn.decomposition import PCA
 import logging
 
 logger = logging.getLogger('nanomodelercg')
@@ -216,75 +218,27 @@ def grow_ligand(inp, params, lig1or2):
         v_scaled = np.dot(rot_mat([1,0,0], best_psi), v_scaled)
         v_shifted = xyz[i-1] + v_scaled
         xyz[i] = v_shifted*1
-    print_xyz(xyz, "LIG{}.xyz".format(lig1or2))
     return xyz
 
 def place_ligands(staples_xyz, staples_normals, lig_ndx, inp, params):
-    lig1_xyz = []
-    lig1_generic = grow_ligand(inp, params, "1")
-    for ndx in lig_ndx[0]:
-        lig1_shifted = lig1_generic + (staples_xyz[ndx] - lig1_generic[0])
-        lig1_xyz.append(lig1_shifted[1:])
-    if lig1_xyz != []:
-        lig1_xyz = np.concatenate(lig1_xyz, axis=0)
+    result = []
+    pca = PCA(n_components=3)
+    for n, ndxs in enumerate(lig_ndx, 1):
+        lig_xyz = []
+        lig_generic = grow_ligand(inp, params, str(n))
+        pca.fit(lig_generic)
+        pca_ax = pca.components_[0]/np.linalg.norm(pca.components_[0])
+        if np.sum(np.mean(lig_generic, axis=0)>=0)<2:
+            pca_ax=-1*pca_ax
+        lig_generic = np.insert(lig_generic, 3, 1, axis=1).T
+        for ndx in ndxs:
+            xyz_normal_pts = -1*np.array([staples_normals[ndx]*0, staples_normals[ndx]*1, staples_normals[ndx]*2]) + staples_xyz[ndx]
+            xyz_generic_pts = np.array([pca_ax*i for i in range(3)])
+            trans_matrix=affine_matrix_from_points(xyz_generic_pts.T, xyz_normal_pts.T, shear=False, scale=False, usesvd=True)
+            lig_shifted = np.dot(trans_matrix, lig_generic).T[:,:3]
+            lig_xyz.append(lig_shifted[1:]) #Discards the first bead which belongs to the core
+        if lig_xyz != []:
+            lig_xyz = np.concatenate(lig_xyz, axis=0)
+        result.append(lig_xyz)
 
-    lig2_xyz = []
-    lig2_generic = grow_ligand(inp, params, "2")
-    for ndx in lig_ndx[1]:
-        lig2_shifted = lig2_generic + (staples_xyz[ndx] - lig2_generic[0])
-        lig2_xyz.append(lig2_shifted[1:])
-    if lig2_xyz != []:
-        lig2_xyz = np.concatenate(lig2_xyz, axis=0)
-    return (lig1_xyz, lig2_xyz)
-
-def print_xyz(xyz, fname):
-    f = open(fname, "w")
-    f.write("{}\n\n".format(len(xyz)))
-    for i, x in enumerate(np.array(xyz)*10):
-        f.write("A{:<3}  {:>10.3f}  {:>10.3f}  {:>10.3f}\n".format(i,*x))
-    f.close()
-
-"""def grow_one_ligands(staples_xyz, staples_normals, single_lig_ndx, inp, params, lig1or2):
-
-    Return the xyz coordinates of a ligand
-
-    lig_btypes = get_list_btypes(inp, lig1or2)
-    if lig1or2 == "1":
-        lig_n_per_bead = inp.lig1_n_per_bead
-    elif lig1or2 == "2":
-        lig_n_per_bead = inp.lig2_n_per_bead
-
-    if params != None:
-        inter_bead_distances = []
-        for a1, a2 in zip(list_btypes[:-1], list_btypes[1:]):
-            key = "{}-{}".format(a1,a2)
-            if key in params.bondtypes.keys():
-                inter_bead_distances.append(params.bondtypes[key][1])
-            else:
-                inter_bead_distances.append(2*inp.bead_radius)
-    else:
-        inter_bead_distances = [2*inp.bead_radius]*(len(list_btypes)-1)
-
-    lig_xyz = []
-    for ndx in single_lig_ndx:
-        norma = np.linalg.norm(staples_xyz[ndx])
-        current_bead = 1
-        for i in range(len(lig_n_per_bead)):
-            for j in range(lig_n_per_bead[i]):
-                distance_to_bead = np.sum(inter_bead_distances[:current_bead])
-                xyz = staples_xyz[ndx] + staples_normals[ndx]*distance_to_bead
-                lig_xyz.append(xyz)
-                current_bead += 1
-    return lig_xyz
-
-
-def grow_ligands(staples_xyz, staples_normals, lig_ndx, inp, params):
-
-    Determines the xyz coordinates of all the beads of both ligands
-
-    logger.info("\tGrowing ligand 1 from the respective anchoring sites...")
-    lig1_xyz = grow_one_ligands(staples_xyz, staples_normals, lig_ndx[0], inp, params, "1")
-    logger.info("\tGrowing ligand 2 from the respective anchoring sites...")
-    lig2_xyz = grow_one_ligands(staples_xyz, staples_normals, lig_ndx[1], inp, params, "2")
-    return (lig1_xyz, lig2_xyz)
-"""
+    return tuple(result)
