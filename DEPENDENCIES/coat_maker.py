@@ -153,11 +153,7 @@ def assign_morphology(staples_xyz, inp):
             lig2_ndx = indexes
     return (lig1_ndx, lig2_ndx)
 
-
-def grow_one_ligands(staples_xyz, staples_normals, single_lig_ndx, inp, params, lig1or2):
-    """
-    Return the xyz coordinates of a ligand
-    """
+def get_list_btypes(inp, lig1or2):
     if lig1or2 == "1":
         lig_btypes = inp.lig1_btypes
         lig_n_per_bead = inp.lig1_n_per_bead
@@ -168,6 +164,78 @@ def grow_one_ligands(staples_xyz, staples_normals, single_lig_ndx, inp, params, 
     list_btypes = [inp.core_btype]
     for i in range(len(lig_btypes)):
         list_btypes += [lig_btypes[i]]*lig_n_per_bead[i]
+    return list_btypes
+
+def grow_ligand(inp, params, lig1or2):
+    """
+    Generates the XYZ coordinates of a ligand along the X-axis. A core bead is used as the point (0,0,0)
+    """
+    btypes = get_list_btypes(inp, lig1or2)
+    n_at = len(btypes) + 1 #+1 because the ligand will include one bead from the core
+    if params != None:
+        bonds = []
+        for a1, a2 in zip(btypes[:-1], btypes[1:]):
+            key = "{}-{}".format(a1, a2)
+            try:
+                bond_eq = params.bondtypes[key][1]
+            except:
+                bond_eq = 2*inp.bead_radius
+            bonds.append(bond_eq)
+        angles = []
+        for a1, a2, a3 in zip(btypes[:-2], btypes[1:-1], btypes[2:]):
+            key = "{}-{}-{}".format(a1,a2,a3)
+            try:
+                angle = params.angletypes[key]
+                angle = np.array(angle)
+                angle_eq = angle[:,1][np.argmax(angle[:,2])] #takes the equilibrium value of highest constant
+            except:
+                angle_eq = 180.0
+            angles.append(angle_eq)
+    else:
+        bonds = [2*inp.bead_radius]*(n_at-1)
+        angles = [180.0]*(n_at-2)
+
+    xyz = np.zeros((n_at, 3))
+    xyz[1] = np.array([bonds[0],0,0])
+    for i, old_b_length, new_b_length, a_length in zip(range(2,n_at), bonds[:-1], bonds[1:], angles):
+        u_passive = xyz[i-1] - xyz[i-2]
+        vy = 1 #bsae of calculus since any vector V in a cone would be an angle a_length from the previous bond
+        vz = 1
+        vx = (old_b_length*new_b_length*np.cos(a_length) - u_passive[1]*vy - u_passive[2]*vz)/(u_passive[0])
+        v_passive = np.array([vx, vy, vz])
+        v_scaled = v_passive/np.linalg.norm(v_passive)*new_b_length
+        v_shifted = xyz[i-1] + v_scaled
+        xyz[i] = v_shifted*1
+    return xyz
+
+def place_ligands(staples_xyz, staples_normals, lig_ndx, inp, params):
+    lig1_xyz = []
+    lig1_generic = grow_ligand(inp, params, "1")
+    for ndx in lig_ndx[0]:
+        lig1_shifted = lig1_generic + (staples_xyz[ndx] - lig1_generic[0])
+        lig1_xyz.append(lig1_shifted)
+    if lig1_xyz != []:
+        lig1_xyz = np.concatenate(lig1_xyz, axis=0)
+
+    lig2_xyz = []
+    lig2_generic = grow_ligand(inp, params, "2")
+    for ndx in lig_ndx[1]:
+        lig2_shifted = lig2_generic + (staples_xyz[ndx] - lig2_generic[0])
+        lig2_xyz.append(lig2_shifted)
+    if lig2_xyz != []:
+        lig2_xyz = np.concatenate(lig2_xyz, axis=0)
+    return (lig1_xyz, lig2_xyz)
+
+
+"""def grow_one_ligands(staples_xyz, staples_normals, single_lig_ndx, inp, params, lig1or2):
+
+    Return the xyz coordinates of a ligand
+
+    lig_btypes = get_list_btypes(inp, lig1or2)
+    if lig1or2 == "1":
+        lig_n_per_bead = inp.lig1_n_per_bead
+    elif lig1or2 == "2":
+        lig_n_per_bead = inp.lig2_n_per_bead
 
     if params != None:
         inter_bead_distances = []
@@ -192,12 +260,14 @@ def grow_one_ligands(staples_xyz, staples_normals, single_lig_ndx, inp, params, 
                 current_bead += 1
     return lig_xyz
 
+
 def grow_ligands(staples_xyz, staples_normals, lig_ndx, inp, params):
-    """
+
     Determines the xyz coordinates of all the beads of both ligands
-    """
+
     logger.info("\tGrowing ligand 1 from the respective anchoring sites...")
     lig1_xyz = grow_one_ligands(staples_xyz, staples_normals, lig_ndx[0], inp, params, "1")
     logger.info("\tGrowing ligand 2 from the respective anchoring sites...")
     lig2_xyz = grow_one_ligands(staples_xyz, staples_normals, lig_ndx[1], inp, params, "2")
     return (lig1_xyz, lig2_xyz)
+"""
