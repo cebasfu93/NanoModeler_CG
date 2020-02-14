@@ -170,8 +170,9 @@ def grow_ligand(inp, params, lig1or2):
     """
     Generates the XYZ coordinates of a ligand along the X-axis. A core bead is used as the point (0,0,0)
     """
+    n_iter = 20
+    psis = np.linspace(0, 2*np.pi, n_iter)
     btypes = get_list_btypes(inp, lig1or2)
-    print(btypes)
     n_at = len(btypes) #The ligand includes one bead from the core
     if params != None:
         bonds = []
@@ -195,7 +196,7 @@ def grow_ligand(inp, params, lig1or2):
     else:
         bonds = [2*inp.bead_radius]*(n_at-1)
         angles = [180.0]*(n_at-2)
-    print(angles)
+
     xyz = np.zeros((n_at, 3))
     xyz[1] = np.array([bonds[0],0,0])
     for i, old_b_length, new_b_length, a_length in zip(range(2,n_at), bonds[:-1], bonds[1:], angles):
@@ -203,6 +204,16 @@ def grow_ligand(inp, params, lig1or2):
         M = rot_mat([0,0,1], (180-a_length)*np.pi/180)
         v_passive = np.dot(M, u_passive)
         v_scaled = v_passive/np.linalg.norm(v_passive)*new_b_length
+        best_x = v_scaled[0]
+        best_psi = 0
+        for psi in psis:
+            M = rot_mat([1,0,0], psi)
+            v_test = np.dot(M, v_scaled)
+            if v_test[0] < best_x:
+                best_x = v_test[0]
+                best_psi = psi
+
+        v_scaled = np.dot(rot_mat([1,0,0], best_psi), v_scaled)
         v_shifted = xyz[i-1] + v_scaled
         xyz[i] = v_shifted*1
     print_xyz(xyz, "LIG{}.xyz".format(lig1or2))
