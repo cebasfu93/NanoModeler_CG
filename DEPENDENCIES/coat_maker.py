@@ -171,7 +171,8 @@ def grow_ligand(inp, params, lig1or2):
     Generates the XYZ coordinates of a ligand along the X-axis. A core bead is used as the point (0,0,0)
     """
     btypes = get_list_btypes(inp, lig1or2)
-    n_at = len(btypes) + 1 #+1 because the ligand will include one bead from the core
+    print(btypes)
+    n_at = len(btypes) #The ligand includes one bead from the core
     if params != None:
         bonds = []
         for a1, a2 in zip(btypes[:-1], btypes[1:]):
@@ -194,18 +195,21 @@ def grow_ligand(inp, params, lig1or2):
     else:
         bonds = [2*inp.bead_radius]*(n_at-1)
         angles = [180.0]*(n_at-2)
-
+    print(angles)
     xyz = np.zeros((n_at, 3))
     xyz[1] = np.array([bonds[0],0,0])
     for i, old_b_length, new_b_length, a_length in zip(range(2,n_at), bonds[:-1], bonds[1:], angles):
         u_passive = xyz[i-1] - xyz[i-2]
-        vy = 1 #bsae of calculus since any vector V in a cone would be an angle a_length from the previous bond
+        vy = 1 #base of calculus since any vector V in a cone would be an angle a_length from the previous bond
         vz = 1
         vx = (old_b_length*new_b_length*np.cos(a_length) - u_passive[1]*vy - u_passive[2]*vz)/(u_passive[0])
         v_passive = np.array([vx, vy, vz])
         v_scaled = v_passive/np.linalg.norm(v_passive)*new_b_length
         v_shifted = xyz[i-1] + v_scaled
         xyz[i] = v_shifted*1
+        current= xyz[i]-xyz[i-1]
+        print(np.round(np.arccos(np.dot(current,u_passive)/(np.linalg.norm(current)*np.linalg.norm(u_passive)))*180/np.pi,1))
+
     return xyz
 
 def place_ligands(staples_xyz, staples_normals, lig_ndx, inp, params):
