@@ -1,5 +1,6 @@
 import numpy as np
 from DEPENDENCIES.Extras import center
+import itertools
 import logging
 
 logger = logging.getLogger('nanomodelercg')
@@ -12,20 +13,19 @@ def primitive(inp):
     logger.info("\tConstructing lattice from primitive unit cell...")
     const = inp.bead_radius*2
     cells_per_side = int((((2*inp.char_radius)//const)+1)//2*2+1)
-    N_unit_cells = cells_per_side**3
-    xyz = np.array([])
-
-    for i in range(cells_per_side):
-        for j in range(cells_per_side):
-            for k in range(cells_per_side):
-
-                xyz = np.append(xyz, [i,j,k,i+1,j,k,i,j+1,k,i,j,k+1,i+1,j+1,k,i+1,j,k+1,i,j+1,k+1,i+1,j+1,k+1])
-
-    xyz = xyz * const
-    xyz = xyz.reshape((len(xyz)//3,3))
-    xyz = np.unique(xyz, axis=0)
+    cells_range = list(range(cells_per_side))
+    triplets = np.array(list(itertools.product(cells_range, repeat=3)))
+    xyz = triplets*const
     xyz = center(xyz)
+    #print_xyz(xyz, "core.xyz")
     return xyz
+
+def print_xyz(xyz, fname):
+    f = open(fname, "w")
+    f.write("{}\n\n".format(len(xyz)))
+    for i, x in enumerate(xyz*10,1):
+        f.write("A{:<3} {:>10.3f} {:>10.3f} {:>10.3f}\n".format(i, *x))
+    f.close()
 
 def bcc(inp):
     """
@@ -34,20 +34,19 @@ def bcc(inp):
     logger.info("\tConstructing lattice from BCC unit cell...")
     const = inp.bead_radius*4/np.sqrt(3)
     cells_per_side = int((((2*inp.char_radius)//const)+1)//2*2+1)
-    N_unit_cells = cells_per_side**3
-    xyz = np.array([])
+    cells_per_side = cells_per_side*2+1
+    cells_range = list(range(cells_per_side))
+    triplets = np.array(list(itertools.product(cells_range, repeat=3)))
+    xyz = []
+    for trip in triplets:
+        if np.all(trip%2==0):
+            xyz.append(trip)
+        elif np.all(trip[:2]%2==1) and trip[2]%2==1:
+            xyz.append(trip)
 
-    for i in range(cells_per_side):
-        for j in range(cells_per_side):
-            for k in range(cells_per_side):
-
-                xyz = np.append(xyz, [i,j,k,i+1,j,k,i,j+1,k,i,j,k+1,i+1,j+1,k,i+1,j,k+1,i,j+1,k+1,i+1,j+1,k+1])
-                xyz = np.append(xyz, [i+0.5,j+0.5,k+0.5])
-
-    xyz = xyz * const
-    xyz = xyz.reshape((len(xyz)//3,3))
-    xyz = np.unique(xyz, axis=0)
+    xyz = np.array(xyz)*const/2
     xyz = center(xyz)
+    #print_xyz(xyz, "bcc.xyz")
     return xyz
 
 def fcc(inp):
@@ -57,20 +56,20 @@ def fcc(inp):
     logger.info("\tConstructing lattice from FCC unit cell...")
     const = inp.bead_radius*np.sqrt(8)
     cells_per_side = int((((2*inp.char_radius)//const)+1)//2*2+1)
-    N_unit_cells = cells_per_side**3
-    xyz = np.array([])
-    Y=10
-    for i in range(cells_per_side+Y):
-        for j in range(cells_per_side+Y):
-            for k in range(cells_per_side+Y):
+    cells_per_side = cells_per_side*2+1
+    cells_range = list(range(cells_per_side))
+    triplets = np.array(list(itertools.product(cells_range, repeat=3)))
+    xyz = []
+    for trip in triplets:
+        if trip[2]%2==0:
+            if np.all(trip[:2]%2==0) or np.all(trip[:2]%2!=0):
+                xyz.append(trip)
+        elif trip[0]%2 != trip[1]%2:
+            xyz.append(trip)
 
-                xyz = np.append(xyz, [i,j,k,i+1,j,k,i,j+1,k,i,j,k+1,i+1,j+1,k,i+1,j,k+1,i,j+1,k+1,i+1,j+1,k+1])
-                xyz = np.append(xyz, [i,j+0.5,k+0.5,i+0.5,j,k+0.5,i+0.5,j+0.5,k,i+1,j+0.5,k+0.5,i+0.5,j+1,k+0.5,i+0.5,j+0.5,k+1])
-
-    xyz = xyz * const
-    xyz = xyz.reshape((len(xyz)//3,3))
-    xyz = np.unique(xyz, axis=0)
+    xyz = np.array(xyz)*const/2
     xyz = center(xyz)
+    #print_xyz(xyz, "fcc.xyz")
     return xyz
 
 def hcp(inp):
@@ -137,7 +136,7 @@ def gkeka_method(a, inp):
 
 def shell(block, inp):
     """
-    Finds the best number of beads that result in the Gkeka sphere with an area per bead a close as possible as the theoretical value 
+    Finds the best number of beads that result in the Gkeka sphere with an area per bead a close as possible as the theoretical value
     """
     logger.info("\tConstructing hollow shell from concentric rings...")
     ens, diffs = [], []
