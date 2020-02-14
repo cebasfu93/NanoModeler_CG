@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.optimize import minimize
 from  scipy.spatial.distance import cdist
-from DEPENDENCIES.Extras import sunflower_pts, cartesian_to_polar, polar_to_cartesian
+from DEPENDENCIES.Extras import sunflower_pts, cartesian_to_polar, polar_to_cartesian, rot_mat
 import logging
 
 logger = logging.getLogger('nanomodelercg')
@@ -200,16 +200,12 @@ def grow_ligand(inp, params, lig1or2):
     xyz[1] = np.array([bonds[0],0,0])
     for i, old_b_length, new_b_length, a_length in zip(range(2,n_at), bonds[:-1], bonds[1:], angles):
         u_passive = xyz[i-1] - xyz[i-2]
-        vy = 1 #base of calculus since any vector V in a cone would be an angle a_length from the previous bond
-        vz = 1
-        vx = (old_b_length*new_b_length*np.cos(a_length) - u_passive[1]*vy - u_passive[2]*vz)/(u_passive[0])
-        v_passive = np.array([vx, vy, vz])
+        M = rot_mat([0,0,1], (180-a_length)*np.pi/180)
+        v_passive = np.dot(M, u_passive)
         v_scaled = v_passive/np.linalg.norm(v_passive)*new_b_length
         v_shifted = xyz[i-1] + v_scaled
         xyz[i] = v_shifted*1
-        current= xyz[i]-xyz[i-1]
-        print(np.round(np.arccos(np.dot(current,u_passive)/(np.linalg.norm(current)*np.linalg.norm(u_passive)))*180/np.pi,1))
-
+    print_xyz(xyz, "LIG{}.xyz".format(lig1or2))
     return xyz
 
 def place_ligands(staples_xyz, staples_normals, lig_ndx, inp, params):
@@ -217,7 +213,7 @@ def place_ligands(staples_xyz, staples_normals, lig_ndx, inp, params):
     lig1_generic = grow_ligand(inp, params, "1")
     for ndx in lig_ndx[0]:
         lig1_shifted = lig1_generic + (staples_xyz[ndx] - lig1_generic[0])
-        lig1_xyz.append(lig1_shifted)
+        lig1_xyz.append(lig1_shifted[1:])
     if lig1_xyz != []:
         lig1_xyz = np.concatenate(lig1_xyz, axis=0)
 
@@ -225,11 +221,17 @@ def place_ligands(staples_xyz, staples_normals, lig_ndx, inp, params):
     lig2_generic = grow_ligand(inp, params, "2")
     for ndx in lig_ndx[1]:
         lig2_shifted = lig2_generic + (staples_xyz[ndx] - lig2_generic[0])
-        lig2_xyz.append(lig2_shifted)
+        lig2_xyz.append(lig2_shifted[1:])
     if lig2_xyz != []:
         lig2_xyz = np.concatenate(lig2_xyz, axis=0)
     return (lig1_xyz, lig2_xyz)
 
+def print_xyz(xyz, fname):
+    f = open(fname, "w")
+    f.write("{}\n\n".format(len(xyz)))
+    for i, x in enumerate(np.array(xyz)*10):
+        f.write("A{:<3}  {:>10.3f}  {:>10.3f}  {:>10.3f}\n".format(i,*x))
+    f.close()
 
 """def grow_one_ligands(staples_xyz, staples_normals, single_lig_ndx, inp, params, lig1or2):
 
