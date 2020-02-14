@@ -96,79 +96,58 @@ def top_writer(TMP, np_xyz, core_bonds, lig_bonds, lig_angles, lig_dihedrals, in
         b_key = "{}-{}".format(btypes[bond[0]], btypes[bond[1]])
         f.write("{:>5d} {:>5d} {:>6d} {:>13.5f} {:>13.1f} ; core EN\n".format(at1, at2, 1, 2*inp.bead_radius, inp.core_en_k))
 
-    for bond in lig_bonds[0]:
-        at1 = bond[0] + 1
-        at2 = bond[1] + 1
-        b_key = "{}-{}".format(btypes[bond[0]], btypes[bond[1]])
-        try:
-            b_top = params.bondtypes[b_key]
-            f.write("{:>5d} {:>5d} {:>6d} {:>13.5f} {:>13.1f}\n".format(at1, at2, b_top[0], b_top[1], b_top[2]))
-        except:
-            logger.warning("\t\tOmitting bond {}. Params not found...".format(b_key))
-    for bond in lig_bonds[1]:
-        at1 = bond[0] + 1
-        at2 = bond[1] + 1
-        b_key = "{}-{}".format(btypes[bond[0]], btypes[bond[1]])
-        try:
-            b_top = params.bondtypes[b_key]
-            f.write("{:>5d} {:>5d} {:>6d} {:>13.5f} {:>13.1f}\n".format(at1, at2, b_top[0], b_top[1], b_top[2]))
-        except:
-            logger.warning("\t\tOmitting bond {}. Params not found...".format(b_key))
+    for l, lig_bond in enumerate(lig_bonds,1):
+        n_warns = 0
+        for bond in lig_bond:
+            at1 = bond[0] + 1
+            at2 = bond[1] + 1
+            b_key = "{}-{}".format(btypes[bond[0]], btypes[bond[1]])
+            try:
+                b_top = params.bondtypes[b_key]
+                f.write("{:>5d} {:>5d} {:>6d} {:>13.5f} {:>13.1f}\n".format(at1, at2, b_top[0], b_top[1], b_top[2]))
+            except:
+                n_warns += 1
+        logger.warning("\t\tThe nanoparticle is missing {} bond parameters in ligands {}. See above. Params not found...".format(n_warns, l+1))
+
 
     logger.info("\tWriting [ angles ]...")
     f.write("\n[ angles ]\n")
     f.write(";  ai    aj    ak funct        theta          cth\n")
-    for angle in lig_angles[0]:
-        at1 = angle[0] + 1
-        at2 = angle[1] + 1
-        at3 = angle[2] + 1
-        a_key = "{}-{}-{}".format(btypes[angle[0]], btypes[angle[1]], btypes[angle[2]])
-        try:
-            a_tops = params.angletypes[a_key]
-            for a_top in a_tops:
-                f.write("{:>5d} {:>5d} {:>5d} {:>6d} {:>9.4e}  {:>9.4e}\n".format(at1, at2, at3, a_top[0], a_top[1], a_top[2]))
-        except:
-            logger.warning("\t\tOmitting angle {}. Params not found...".format(a_key))
-    for angle in lig_angles[1]:
-        at1 = angle[0] + 1
-        at2 = angle[1] + 1
-        at3 = angle[2] + 1
-        a_key = "{}-{}-{}".format(btypes[angle[0]], btypes[angle[1]], btypes[angle[2]])
-        try:
-            a_tops = params.angletypes[a_key]
-            for a_top in a_tops:
-                f.write("{:>5d} {:>5d} {:>5d} {:>6d}  {:>9.4e}  {:>9.4e}\n".format(at1, at2, at3, a_top[0], a_top[1], a_top[2]))
-        except:
-            logger.warning("\t\tOmitting angle {}. Params not found...".format(a_key))
+    for l, lig_angle in enumerate(lig_angles,1):
+        n_warns = 0
+        for angle in lig_angle:
+            at1 = angle[0] + 1
+            at2 = angle[1] + 1
+            at3 = angle[2] + 1
+            a_key = "{}-{}-{}".format(btypes[angle[0]], btypes[angle[1]], btypes[angle[2]])
+            try:
+                a_tops = params.angletypes[a_key]
+                for a_top in a_tops:
+                    f.write("{:>5d} {:>5d} {:>5d} {:>6d} {:>9.4e}  {:>9.4e}\n".format(at1, at2, at3, a_top[0], a_top[1], a_top[2]))
+            except:
+                n_warns += 1
+        logger.warning("\t\tThe nanoparticle is missing {} angle parameters in ligands {}. See above. Params not found...".format(n_warns, l+1))
 
     logger.info("\tWriting [ dihedrals ]...")
     f.write("\n[ dihedrals ]\n")
     f.write(";  ai    aj    ak    al  funct        phi0        kphi          m\n")
-    for dihedral in lig_dihedrals[0]:
-        at1 = dihedral[0] + 1
-        at2 = dihedral[1] + 1
-        at3 = dihedral[2] + 1
-        at4 = dihedral[3] + 1
-        d_key = "{}-{}-{}-{}".format(btypes[dihedral[0]], btypes[dihedral[1]], btypes[dihedral[2]], btypes[dihedral[3]])
-        try:
-            d_tops = params.dihedraltypes[d_key]
-            for d_top in d_tops:
-                f.write("{:>5d} {:>5d} {:>5d} {:>5d} {:>6d}  {:>9.4e}  {:>9.4e}  {:>9d}\n".format(at1, at2, at3, at4, d_top[0], d_top[1], d_top[2], d_top[3]))
-        except:
-            logger.warning("\t\tOmitting dihedral {}. Params not found...".format(d_key))
-    for dihedral in lig_dihedrals[1]:
-        at1 = dihedral[0] + 1
-        at2 = dihedral[1] + 1
-        at3 = dihedral[2] + 1
-        at4 = dihedral[3] + 1
-        d_key = "{}-{}-{}-{}".format(btypes[dihedral[0]], btypes[dihedral[1]], btypes[dihedral[2]], btypes[dihedral[3]])
-        try:
-            d_tops = params.dihedraltypes[d_key]
-            for d_top in d_tops:
-                f.write("{:>5d} {:>5d} {:>5d} {:>5d} {:>6d}  {:>9.4e}  {:>9.4e}  {:>9d}\n".format(at1, at2, at3, at4, d_top[0], d_top[1], d_top[2], d_top[3]))
-        except:
-            logger.warning("\t\tOmitting dihedral {}. Params not found...".format(d_key))
-
+    for l, lig_dihedral in enumerate(lig_dihedrals, 1):
+        n_warns = 0
+        for dihedral in lig_dihedral:
+            n_warns = 0
+            at1 = dihedral[0] + 1
+            at2 = dihedral[1] + 1
+            at3 = dihedral[2] + 1
+            at4 = dihedral[3] + 1
+            d_key = "{}-{}-{}-{}".format(btypes[dihedral[0]], btypes[dihedral[1]], btypes[dihedral[2]], btypes[dihedral[3]])
+            try:
+                d_tops = params.dihedraltypes[d_key]
+                for d_top in d_tops:
+                    f.write("{:>5d} {:>5d} {:>5d} {:>5d} {:>6d}  {:>9.4e}  {:>9.4e}  {:>9d}\n".format(at1, at2, at3, at4, d_top[0], d_top[1], d_top[2], d_top[3]))
+            except:
+                n_warns += 1
+        logger.warning("\t\tThe nanoparticle is missing {} dihedral parameters in ligands {}. See above. Params not found...".format(n_warns, l+1))
+    
     logger.info("\tWriting [ system ]...")
     f.write("\n[ system ]\n")
     f.write("Nanoparticle prepared with NanoModeler_CG\n")
