@@ -16,10 +16,9 @@ def place_staples(core_xyz, inp):
     """
     d_thres = 2*inp.bead_radius+0.01 #threshold to find neighbors to calculate normals to surface
 
-
     if inp.n_tot_lig <= 300 and inp.n_tot_lig > 0:
         logger.info("\tAnchors will be placed minimizing electric energy following a Monte Carlo approach. This will place the ligands as far away as possible from one another...")
-        virtual_xyz = ThomsonMC(n=inp.n_tot_lig)*(inp.char_radius + 2*inp.bead_radius)
+        virtual_xyz = ThomsonMC(n=inp.n_tot_lig, mcs=1000, sigma=0.01)*(inp.char_radius + 2*inp.bead_radius)
     else:
         logger.info("\tThe number of ligands is too big to optimize their location on the core. Anchors will be placed sampling randomly the space in spherical coordinates...")
         virtual_xyz = sunflower_pts(inp.n_tot_lig)*(inp.char_radius + 2*inp.bead_radius)

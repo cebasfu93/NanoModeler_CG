@@ -130,6 +130,7 @@ def ThomsonMC(n, mcs, sigma):
     #ax.set_aspect("equal")
     pyplot.show()
     pyplot.close()"""
+    return positions
 
 
 if __name__ == '__main__':
