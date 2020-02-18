@@ -2,6 +2,7 @@ import numpy as np
 from scipy.optimize import minimize
 from  scipy.spatial.distance import cdist
 from DEPENDENCIES.Extras import sunflower_pts, cartesian_to_polar, polar_to_cartesian, rot_mat
+from DEPENDENCIES.ThomsonMC import ThomsonMC
 from  DEPENDENCIES.transformations import *
 from sklearn.decomposition import PCA
 import logging
@@ -9,55 +10,19 @@ import logging
 logger = logging.getLogger('nanomodelercg')
 logger.addHandler(logging.NullHandler())
 
-def sphere_cons(xyz, rad):
-    """
-    Returns the difference between the norm of the parsed vector and the target radius
-    """
-    zero = np.linalg.norm(xyz) - rad
-    return zero
-
-def calc_Q(xyz, staples, ndx):
-    """
-    Returns the sum of the reciprocal distances. This scales as the electrostatic potential energy of charges on a sphere
-    """
-    staples[ndx] = xyz
-    dists = cdist(staples, staples)
-    dists = dists[dists!=0]
-    Q = np.sum(np.reciprocal(dists))
-    return Q
-
-def electric_minimization(xyz):
-    """
-    Modifies points on a sphere to minimize their electrostatic potential energy
-    """
-    logger.info("\tMinimizing points on a sphere...")
-    R_model = np.linalg.norm(xyz[0])
-    max_iter = 100 #this value is an arbitrary value to avoid getting stuck in a loop
-    for i in range(max_iter):
-        iterations = []
-        for j in range(len(xyz)):
-            cons = {'type':'eq', 'fun':sphere_cons, 'args':[R_model]}
-            res_min = minimize(calc_Q, x0=xyz[j], args=(xyz, j), constraints=cons)
-            xyz[j] = res_min.x
-            iterations.append(res_min.nit)
-        if np.all(np.array(iterations)==1):
-            logger.info("\tMinimization converged at {} steps...".format(i))
-            break
-        if i == (max_iter-1):
-            warn_txt = "\tATTENTION. The minimization of the electric potential energy did not finish. Double check the position of the ligands in the output structure..."
-            logger.warning(warn_txt)
-    return xyz
-
 def place_staples(core_xyz, inp):
     """
     Return the position of the core beads where to place ligands and the vectors normal to the core's shape at such points
     """
     d_thres = 2*inp.bead_radius+0.01 #threshold to find neighbors to calculate normals to surface
 
-    virtual_xyz = sunflower_pts(inp.n_tot_lig)*(inp.char_radius + 2*inp.bead_radius)
-    if inp.n_tot_lig <= 20 and inp.n_tot_lig > 0:
-        logger.info("\tAnchors will be placed minimizing electric energy. This will place the ligands as far away as possible from one another...")
-        virtual_xyz = electric_minimization(virtual_xyz)
+
+    if inp.n_tot_lig <= 300 and inp.n_tot_lig > 0:
+        logger.info("\tAnchors will be placed minimizing electric energy following a Monte Carlo approach. This will place the ligands as far away as possible from one another...")
+        virtual_xyz = ThomsonMC(n=inp.n_tot_lig)*(inp.char_radius + 2*inp.bead_radius)
+    else:
+        logger.info("\tThe number of ligands is too big to optimize their location on the core. Anchors will be placed sampling randomly the space in spherical coordinates...")
+        virtual_xyz = sunflower_pts(inp.n_tot_lig)*(inp.char_radius + 2*inp.bead_radius)
 
     if inp.core_shape != "shell":
         core_dists = cdist(core_xyz, core_xyz)
@@ -69,7 +34,7 @@ def place_staples(core_xyz, inp):
         inp.n_tot_lig = np.sum(surface)
         inp.lig1_num = int(inp.n_tot_lig * inp.lig1_frac)
         inp.lig2_num = inp.n_tot_lig - inp.lig1_num
-        logger.warning("\tATTENTION. The grafting density is to high to meet requirements...")
+        logger.warning("\tATTENTION. The grafting density is too high to meet requirements...")
         logger.warning("\t\tResetting total number of ligands to {}".format(inp.n_tot_lig))
         logger.warning("\t\tNew grafting density set to {:.3f}".format(inp.area/inp.n_tot_lig))
         logger.warning("\t\tNumber of ligands 1: {}".format(inp.lig1_num))
