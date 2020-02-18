@@ -1,8 +1,10 @@
 import numpy
 from mpl_toolkits.mplot3d import Axes3D
 
-# return a random configuration of n particles over a unitary sphere
 def random_configuration(n):
+    """
+    Generates random configuration of n points over a unitary sphere
+    """
     points = numpy.random.normal(size=(n, 3))
     norms = numpy.linalg.norm(points, axis=1)
     points = numpy.array([points[i] / norms[i] for i in range(n)])
@@ -12,6 +14,9 @@ def random_configuration(n):
 
 
 def local_potential_energy(index, positions):
+    """
+    Returns the electric energy of the index slice for the positions array
+    """
     assert (index < len(positions))
     norms = numpy.linalg.norm(positions - positions[index], axis=1)
     norms = norms[norms != 0.0]
@@ -19,6 +24,9 @@ def local_potential_energy(index, positions):
 
 
 def potential_energy(positions):
+    """
+    Returns the electric energy of the entire system
+    """
     energy = 0.0
     for i in range(len(positions)):
         energy += local_potential_energy(i, positions)
@@ -26,12 +34,18 @@ def potential_energy(positions):
 
 
 def new_position_in_vicinity(position, sigma):
+    """
+    Updates position and velocity of the beads and rescales them to the unitary sphere
+    """
     new_position = position + sigma * numpy.random.normal(size=3)
     new_position /= numpy.linalg.norm(new_position)
     return new_position
 
 
 def metropolis(index, positions, sigma, T):
+    """
+    Decides to accept or reject a movement of the points
+    """
     old_position = positions[index].copy()
     old_energy = local_potential_energy(index, positions)
 
@@ -47,11 +61,18 @@ def metropolis(index, positions, sigma, T):
     return True
 
 def MC(positions, sigma, T=0.000001):
+    """
+    Makes movements in all the points and decides to accept them or reject them
+    """
     for _ in range(len(positions)):
         index = numpy.random.randint(0, len(positions))
         metropolis(index, positions, sigma, T)
 
 def ThomsonMC(n, mcs, sigma):
+    """
+    Makes mcs moves on all the n points to find the configuration of minimum electric energy.
+    The initial configuration is a random allocation of the points on a unitary sphere.
+    """
     positions = random_configuration(n)
 
     energy = []
