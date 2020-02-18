@@ -1,5 +1,6 @@
 import numpy as np
 from DEPENDENCIES.Extras import center, print_xyz
+from DEPENDENCIES.ThomsonMC import ThomsonMC
 import itertools
 import logging
 
@@ -129,33 +130,41 @@ def gkeka_method(a, inp):
 
 def shell(block, inp):
     """
-    Finds the best number of beads that result in the Gkeka sphere with an area per bead a close as possible as the theoretical value
+    Generates hollow sphere of beads.
+    If there are few beads to place, a MC approach is employed to minimize the electric energy of the system.
+    Else, concentric rings are built to approximate the theoretical area-per-bead
     """
-    logger.info("\tConstructing hollow shell from concentric rings...")
-    ens, diffs = [], []
-    a_ini = inp.bead_radius**2
-    if inp.core_radius >= 0.8 and inp.core_radius <= 1.5:
-        trial_areas = np.linspace(a_ini, 10*a_ini, 300)
-    elif inp.core_radius > 1.5:
-        trial_areas = np.linspace(a_ini/(inp.core_radius**2), a_ini*(inp.core_radius**2), 300)
+    logger.info("\tConstructing hollow shell...")
+    n_beads_trial = int(inp.bead_radius**2/(4*(inp.core_radius**2)))
+    if n_beads_trial <= 300:
+        logger.info("\tCore beads will be placed minimizing electric energy following a Monte Carlo approach. This will place the beads as far away as possible from one another...")
+        core = ThomsonMC(n=n_beads_trial)*inp.core_radius
     else:
-        err_txt = "Unsupported combination of build-mode and nanoparticle radius"
-        raise Exception(err_txt)
+        logger.info("\tCore beads will be placed in concentric rings...")
+        ens, diffs = [], []
+        a_ini = inp.bead_radius**2
+        if inp.core_radius >= 0.8 and inp.core_radius <= 1.5:
+            trial_areas = np.linspace(a_ini, 10*a_ini, 300)
+        elif inp.core_radius > 1.5:
+            trial_areas = np.linspace(a_ini/(inp.core_radius**2), a_ini*(inp.core_radius**2), 300)
+        else:
+            err_txt = "Unsupported combination of build-mode and nanoparticle radius"
+            raise Exception(err_txt)
 
-    diff = 1
+        diff = 1
 
-    for area in trial_areas:
-        en, probe_sphere = gkeka_method(area, inp)
-        dists = cdist(probe_sphere, probe_sphere)
-        new_diff = np.abs(np.mean(np.sort(dists, axis=1)[:,1])-2*inp.bead_radius)
-        ens.append(en)
-        diffs.append(new_diff)
-        if new_diff < diff:
-            #print(en)
-            diff = new_diff
-            core = probe_sphere
+        for area in trial_areas:
+            en, probe_sphere = gkeka_method(area, inp)
+            dists = cdist(probe_sphere, probe_sphere)
+            new_diff = np.abs(np.mean(np.sort(dists, axis=1)[:,1])-2*inp.bead_radius)
+            ens.append(en)
+            diffs.append(new_diff)
+            if new_diff < diff:
+                #print(en)
+                diff = new_diff
+                core = probe_sphere
 
-    diffs = np.array(diffs)
-    ens = np.array(ens)
+        diffs = np.array(diffs)
+        ens = np.array(ens)
 
     return core
