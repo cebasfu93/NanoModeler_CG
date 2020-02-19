@@ -94,7 +94,7 @@ class Input:
             area = 4.*np.pi*self.core_radius**2
         elif self.core_shape == "ellipsoid":
             axa, axb, axc = self.core_ellipse_axis
-            area = 4*np.pi*(((axa*axb)**1.6 + (axa*axc)**1.6 + (axb*axc)**1.6)/3)**1.6
+            area = 4*np.pi*(((axa*axb)**1.6 + (axa*axc)**1.6 + (axb*axc)**1.6)/3)**(1/1.6)
         elif self.core_shape == "cylinder":
             area = 2*np.pi*self.core_cylinder[0]*(self.core_cylinder[0]+ self.core_cylinder[1])
         elif self.core_shape == "rectangular prism":
