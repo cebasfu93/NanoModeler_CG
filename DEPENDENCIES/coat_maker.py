@@ -19,7 +19,12 @@ def place_staples(core_xyz, inp):
 
     if inp.n_tot_lig <= 300 and inp.n_tot_lig > 0:
         logger.info("\tAnchors will be placed minimizing electric energy following a Monte Carlo approach. This will place the ligands as far away as possible from one another...")
-        virtual_xyz = ThomsonMC(n=inp.n_tot_lig, mcs=1000, sigma=0.01)*(inp.char_radius + 2*inp.bead_radius)
+        if inp.n_tot_lig == 1:
+            virtual_xyz = np.array([[inp.char_radius + 2*inp.bead_radius, 0, 0]])
+        elif inp.n_tot_lig == 2:
+            virtual_xyz = np.array([[inp.char_radius + 2*inp.bead_radius, 0, 0], [-1*(inp.char_radius + 2*inp.bead_radius), 0, 0]])
+        else:
+            virtual_xyz = ThomsonMC(n=inp.n_tot_lig, mcs=1000, sigma=0.01)*(inp.char_radius + 2*inp.bead_radius)
     else:
         logger.info("\tThe number of ligands is too big to optimize their location on the core. Anchors will be placed sampling randomly the space in spherical coordinates...")
         virtual_xyz = sunflower_pts(inp.n_tot_lig)*(inp.char_radius + 2*inp.bead_radius)
@@ -197,12 +202,40 @@ def grow_ligand(inp, params, lig1or2):
         xyz[i] = v_shifted*1
     return xyz
 
+def optimize_ligand_orientation(lig_shifted, other_ligands):
+    """
+    Explores rotations of a ligand along its PCA to find the orientation the maximizes the minimum distance with the ligands already placed
+    """
+    phis = np.linspace(0, 2*np.pi, 50)
+    displace = lig_shifted[0]
+    lig_shifted = lig_shifted - displace
+    intern_pca = PCA(n_components=3)
+    intern_pca.fit(lig_shifted)
+    intern_pca_ax = intern_pca.components_[0]/np.linalg.norm(intern_pca.components_[0])
+    if np.sum(np.mean(lig_shifted, axis=0)>=0)<2:
+        intern_pca_ax=-1*intern_pca_ax
+    if other_ligands == []:
+        other_ligands = np.array([[0,0,0]])
+    else:
+        other_ligands = np.array(other_ligands) - displace
+    min_dist = np.min(cdist(lig_shifted, other_ligands))
+    for phi in phis:
+        M = rot_mat(intern_pca_ax, phi)
+        lig_test = np.dot(M,lig_shifted.T).T
+        dist_test = np.min(cdist(lig_test, other_ligands))
+        if dist_test > min_dist:
+            min_dist = dist_test*1
+            lig_shifted = lig_test*1
+    lig_opt = lig_shifted + displace
+    return lig_opt
+
 def place_ligands(staples_xyz, staples_normals, lig_ndx, inp, params):
     """
     Places the ligands in their right position around the core. That is, it generates a reasonable structure for each ligand and roto-translates them
     """
     result = []
     pca = PCA(n_components=3)
+    other_ligands = []
     for n, ndxs in enumerate(lig_ndx, 1):
         lig_xyz = []
         lig_generic = grow_ligand(inp, params, str(n))
@@ -212,11 +245,13 @@ def place_ligands(staples_xyz, staples_normals, lig_ndx, inp, params):
             pca_ax=-1*pca_ax
         lig_generic = np.insert(lig_generic, 3, 1, axis=1).T
         for ndx in ndxs:
-            xyz_normal_pts = -1*np.array([staples_normals[ndx]*0, staples_normals[ndx]*1, staples_normals[ndx]*2]) + staples_xyz[ndx]
+            xyz_normal_pts = -1*np.array([staples_normals[ndx]*i for i in range(3)]) + staples_xyz[ndx]
             xyz_generic_pts = np.array([pca_ax*i for i in range(3)])
-            trans_matrix=affine_matrix_from_points(xyz_generic_pts.T, xyz_normal_pts.T, shear=False, scale=False, usesvd=True)
+            trans_matrix = affine_matrix_from_points(xyz_generic_pts.T, xyz_normal_pts.T, shear=False, scale=False, usesvd=True)
             lig_shifted = np.dot(trans_matrix, lig_generic).T[:,:3]
-            lig_xyz.append(lig_shifted[1:]) #Discards the first bead which belongs to the core
+            lig_opt = optimize_ligand_orientation(lig_shifted, other_ligands)
+            lig_xyz.append(lig_opt[1:]) #Discards the first bead which belongs to the core
+            other_ligands += [[x,y,z] for x,y,z in zip(lig_opt[1:,0], lig_opt[1:,1], lig_opt[1:,2])]
         if lig_xyz != []:
             lig_xyz = np.concatenate(lig_xyz, axis=0)
         result.append(lig_xyz)
