@@ -107,7 +107,7 @@ def top_writer(TMP, np_xyz, core_bonds, lig_bonds, lig_angles, lig_dihedrals, in
                 f.write("{:>5d} {:>5d} {:>6d} {:>13.5f} {:>13.1f}\n".format(at1, at2, b_top[0], b_top[1], b_top[2]))
             except:
                 n_warns += 1
-        logger.warning("\t\tThe nanoparticle is missing {} bond parameters in ligands {}. See above. Params not found...".format(n_warns, l+1))
+        logger.warning("\t\tThe nanoparticle is missing {} bond parameters in ligands {}. See above. Params not found...".format(n_warns, l))
 
 
     logger.info("\tWriting [ angles ]...")
@@ -126,7 +126,7 @@ def top_writer(TMP, np_xyz, core_bonds, lig_bonds, lig_angles, lig_dihedrals, in
                     f.write("{:>5d} {:>5d} {:>5d} {:>6d} {:>9.4e}  {:>9.4e}\n".format(at1, at2, at3, a_top[0], a_top[1], a_top[2]))
             except:
                 n_warns += 1
-        logger.warning("\t\tThe nanoparticle is missing {} angle parameters in ligands {}. See above. Params not found...".format(n_warns, l+1))
+        logger.warning("\t\tThe nanoparticle is missing {} angle parameters in ligands {}. See above. Params not found...".format(n_warns, l))
 
     logger.info("\tWriting [ dihedrals ]...")
     f.write("\n[ dihedrals ]\n")
@@ -146,8 +146,8 @@ def top_writer(TMP, np_xyz, core_bonds, lig_bonds, lig_angles, lig_dihedrals, in
                     f.write("{:>5d} {:>5d} {:>5d} {:>5d} {:>6d}  {:>9.4e}  {:>9.4e}  {:>9d}\n".format(at1, at2, at3, at4, d_top[0], d_top[1], d_top[2], d_top[3]))
             except:
                 n_warns += 1
-        logger.warning("\t\tThe nanoparticle is missing {} dihedral parameters in ligands {}. See above. Params not found...".format(n_warns, l+1))
-    
+        logger.warning("\t\tThe nanoparticle is missing {} dihedral parameters in ligands {}. See above. Params not found...".format(n_warns, l))
+
     logger.info("\tWriting [ system ]...")
     f.write("\n[ system ]\n")
     f.write("Nanoparticle prepared with NanoModeler_CG\n")
