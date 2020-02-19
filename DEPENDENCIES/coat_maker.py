@@ -4,6 +4,7 @@ from  scipy.spatial.distance import cdist
 from DEPENDENCIES.Extras import sunflower_pts, cartesian_to_polar, polar_to_cartesian, rot_mat
 from DEPENDENCIES.ThomsonMC import ThomsonMC
 from  DEPENDENCIES.transformations import *
+from DEPENDENCIES.shape_normals import *
 from sklearn.decomposition import PCA
 import logging
 
@@ -54,7 +55,17 @@ def place_staples(core_xyz, inp):
     staples_xyz = core_xyz[close_ndxs]
 
     logger.info("\tSaving normal directions to the surface at the anchoring sites...")
-    normals = np.zeros((inp.n_tot_lig, 3))
+    normal_functions = {'sphere': sphere_normal,
+    'ellipsoid': ellipsoid_normal,
+    'cylinder': cylinder_normal,
+    'rectangular prism': rectangular_prism_normal,
+    'rod': rod_normal,
+    'pyramid' : pyramid_normal,
+    'octahedron' : octahedron_normal}
+    normals = np.array([normal_functions[inp.core_shape](staple, inp) for staple in staples_xyz])
+
+
+    """normals = np.zeros((inp.n_tot_lig, 3))
     dists = cdist(staples_xyz, core_xyz)
     sort_dists = np.sort(dists, axis=1)
     for i, xyz in enumerate(staples_xyz):
@@ -68,7 +79,7 @@ def place_staples(core_xyz, inp):
         else:
             normals[i] = xyz/np.linalg.norm(xyz)
     if inp.n_tot_lig == 0:
-        staples_xyz, normals = [], []
+        staples_xyz, normals = [], []"""
     return staples_xyz, normals
 
 def assign_morphology(staples_xyz, inp):
@@ -76,7 +87,6 @@ def assign_morphology(staples_xyz, inp):
     Assigns both ligands to the different staples according to the specified target morphology. It returns the indexes of the staples belonging to each ligand
     """
     indexes = list(range(inp.n_tot_lig))
-
     if inp.morph == 'janus_x' or inp.morph == "stripe_x":
         ax = 0
     elif inp.morph == 'janus_y' or inp.morph == "stripe_y":
@@ -111,7 +121,7 @@ def assign_morphology(staples_xyz, inp):
         lig1_ndx = indexes[:inp.lig1_num]
         lig2_ndx = indexes[inp.lig1_num:]
     elif inp.morph == 'homogeneous':
-        if inp.lig1_num == 1.0:
+        if inp.lig1_frac == 1.0:
             lig1_ndx = indexes
             lig2_ndx = []
         else:
