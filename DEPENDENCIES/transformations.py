@@ -92,8 +92,8 @@ def vector_norm(data, axis=None, out=None):
 def quaternion_matrix(quaternion):
     q = numpy.array(quaternion, dtype=numpy.float64, copy=True)
     n = numpy.dot(q, q)
-    if n < _EPS:
-        return numpy.identity(4)
+    #if n < _EPS:
+        #return numpy.identity(4)
     q *= math.sqrt(2.0 / n)
     q = numpy.outer(q, q)
     return numpy.array([

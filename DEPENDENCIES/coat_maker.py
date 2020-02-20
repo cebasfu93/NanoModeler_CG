@@ -7,6 +7,8 @@ from  DEPENDENCIES.transformations import *
 from DEPENDENCIES.shape_normals import *
 from sklearn.decomposition import PCA
 import logging
+from mpl_toolkits.mplot3d import Axes3D
+import matplotlib.pyplot as plt
 
 logger = logging.getLogger('nanomodelercg')
 logger.addHandler(logging.NullHandler())
@@ -82,9 +84,9 @@ def place_staples(core_xyz, inp):
             norm = np.linalg.norm(normal)
             normals[i] = normal/norm
         else:
-            normals[i] = xyz/np.linalg.norm(xyz)
+            normals[i] = xyz/np.linalg.norm(xyz)"""
     if inp.n_tot_lig == 0:
-        staples_xyz, normals = [], []"""
+        staples_xyz, normals = [], []
     return staples_xyz, normals
 
 def assign_morphology(staples_xyz, inp):
@@ -245,10 +247,11 @@ def place_ligands(staples_xyz, staples_normals, lig_ndx, inp, params):
             pca_ax=-1*pca_ax
         lig_generic = np.insert(lig_generic, 3, 1, axis=1).T
         for ndx in ndxs:
-            xyz_normal_pts = -1*np.array([staples_normals[ndx]*i for i in range(3)]) + staples_xyz[ndx]
-            xyz_generic_pts = np.array([pca_ax*i for i in range(3)])
+            xyz_normal_pts = -1*np.array([staples_normals[ndx]*i for i in range(4)])
+            xyz_generic_pts = np.array([pca_ax*i for i in range(4)])
             trans_matrix = affine_matrix_from_points(xyz_generic_pts.T, xyz_normal_pts.T, shear=False, scale=False, usesvd=True)
             lig_shifted = np.dot(trans_matrix, lig_generic).T[:,:3]
+            lig_shifted += staples_xyz[ndx]
             lig_opt = optimize_ligand_orientation(lig_shifted, other_ligands)
             lig_xyz.append(lig_opt[1:]) #Discards the first bead which belongs to the core
             other_ligands += [[x,y,z] for x,y,z in zip(lig_opt[1:,0], lig_opt[1:,1], lig_opt[1:,2])]
