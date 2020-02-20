@@ -7,8 +7,6 @@ from  DEPENDENCIES.transformations import *
 from DEPENDENCIES.shape_normals import *
 from sklearn.decomposition import PCA
 import logging
-from mpl_toolkits.mplot3d import Axes3D
-import matplotlib.pyplot as plt
 
 logger = logging.getLogger('nanomodelercg')
 logger.addHandler(logging.NullHandler())
