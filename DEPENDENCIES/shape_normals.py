@@ -22,7 +22,13 @@ def rectangular_prism_normal(xyz, inp):
     return xyz
 
 def rod_normal(xyz, inp):
-    return xyz
+    if (xyz[0]**2 + xyz[1]**2 + (np.abs(xyz[2])-inp.core_rod_params[1]/2)**2) < (inp.core_rod_params[0]**2):
+        normal = xyz - np.array([0,0,np.sign(xyz[2])*inp.core_rod_params[1]/2])
+    else:
+        normal = xyz.copy()
+        normal[2] = 0.0
+    normal /= np.linalg.norm(normal)
+    return normal
 
 def pyramid_normal(xyz, inp):
     return xyz
