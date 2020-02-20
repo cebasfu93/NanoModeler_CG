@@ -38,7 +38,25 @@ def rod_normal(xyz, inp):
     return normal
 
 def pyramid_normal(xyz, inp):
-    return xyz
+    a = inp.core_pyramid[0]*1
+    L = inp.core_pyramid[1]*1
+    tip = np.array([L/2,0,0])
+    base_pts = np.array([[-L/2,a,0],[-L/2,0,a],[-L/2,-a,0],[-L/2,0,-a]])
+    n_pts = len(base_pts)
+    plane_normals = []
+    D = []
+    for i in range(n_pts):
+        vec = np.cross(tip-base_pts[i], tip-base_pts[(i+1)%n_pts])
+        vec /= np.linalg.norm(vec)
+        plane_normals.append(vec)
+        D.append(-1*np.dot(vec, base_pts[i]))
+    plane_normals.append([-1,0,0])
+    D.append(-1*np.dot(plane_normals[-1], base_pts[0]))
+    plane_normals = np.array(plane_normals)
+    D = np.array(D)
+    dists = np.divide(np.abs(np.dot(plane_normals, xyz)+D), np.linalg.norm(plane_normals, axis=1))
+    normals = plane_normals[np.argmin(dists)]
+    return normals
 
 def octahedron_normal(xyz, inp):
     return xyz
