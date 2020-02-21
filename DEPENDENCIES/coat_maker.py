@@ -237,9 +237,11 @@ def place_ligands(staples_xyz, staples_normals, lig_ndx, inp, params):
                 pca_ax = pca.components_[0]/np.linalg.norm(pca.components_[0])
             if np.sum(np.mean(lig_generic, axis=0)>=0)<2:
                 pca_ax=-1*pca_ax
+            if(np.isclose(np.abs(np.dot(pca_ax, [1,0,0])), [1], 0.01)):
+                pca_ax = np.array([1,0,0])
             lig_generic = np.insert(lig_generic, 3, 1, axis=1).T
             for ndx in ndxs:
-                xyz_normal_pts = np.array([staples_normals[ndx]*i for i in range(4)])*-1  #This -1 is unclear when to put it
+                xyz_normal_pts = np.array([staples_normals[ndx]*i for i in range(4)])#*-1  #This -1 is unclear when to put it
                 xyz_generic_pts = np.array([pca_ax*i for i in range(4)])
                 trans_matrix = affine_matrix_from_points(xyz_generic_pts.T, xyz_normal_pts.T, shear=False, scale=False, usesvd=True)
                 lig_shifted = np.dot(trans_matrix, lig_generic).T[:,:3]
