@@ -69,20 +69,6 @@ def place_staples(core_xyz, inp):
     'octahedron' : octahedron_normal}
     normals = np.array([normal_functions[inp.core_shape](staple, inp) for staple in staples_xyz])
 
-
-    """normals = np.zeros((inp.n_tot_lig, 3))
-    dists = cdist(staples_xyz, core_xyz)
-    sort_dists = np.sort(dists, axis=1)
-    for i, xyz in enumerate(staples_xyz):
-        if inp.core_shape != "shell":
-            neigh_ndx = np.where(dists[i] <= d_thres)[0]
-            neighbors = core_xyz[neigh_ndx]
-            diffs = neighbors - xyz
-            normal = -1*np.mean(diffs, axis=0)
-            norm = np.linalg.norm(normal)
-            normals[i] = normal/norm
-        else:
-            normals[i] = xyz/np.linalg.norm(xyz)"""
     if inp.n_tot_lig == 0:
         staples_xyz, normals = [], []
     return staples_xyz, normals
@@ -210,8 +196,12 @@ def optimize_ligand_orientation(lig_shifted, other_ligands):
     displace = lig_shifted[0]
     lig_shifted = lig_shifted - displace
     intern_pca = PCA(n_components=3)
-    intern_pca.fit(lig_shifted)
-    intern_pca_ax = intern_pca.components_[0]/np.linalg.norm(intern_pca.components_[0])
+    if len(lig_shifted) == 2:
+        intern_pca_ax = np.array([1,0,0])
+    else:
+        intern_pca.fit(lig_shifted)
+        intern_pca_ax = intern_pca.components_[0]/np.linalg.norm(intern_pca.components_[0])
+
     if np.sum(np.mean(lig_shifted, axis=0)>=0)<2:
         intern_pca_ax=-1*intern_pca_ax
     if other_ligands == []:
@@ -238,23 +228,27 @@ def place_ligands(staples_xyz, staples_normals, lig_ndx, inp, params):
     other_ligands = []
     for n, ndxs in enumerate(lig_ndx, 1):
         lig_xyz = []
-        lig_generic = grow_ligand(inp, params, str(n))
-        pca.fit(lig_generic)
-        pca_ax = pca.components_[0]/np.linalg.norm(pca.components_[0])
-        if np.sum(np.mean(lig_generic, axis=0)>=0)<2:
-            pca_ax=-1*pca_ax
-        lig_generic = np.insert(lig_generic, 3, 1, axis=1).T
-        for ndx in ndxs:
-            xyz_normal_pts = -1*np.array([staples_normals[ndx]*i for i in range(4)])
-            xyz_generic_pts = np.array([pca_ax*i for i in range(4)])
-            trans_matrix = affine_matrix_from_points(xyz_generic_pts.T, xyz_normal_pts.T, shear=False, scale=False, usesvd=True)
-            lig_shifted = np.dot(trans_matrix, lig_generic).T[:,:3]
-            lig_shifted += staples_xyz[ndx]
-            lig_opt = optimize_ligand_orientation(lig_shifted, other_ligands)
-            lig_xyz.append(lig_opt[1:]) #Discards the first bead which belongs to the core
-            other_ligands += [[x,y,z] for x,y,z in zip(lig_opt[1:,0], lig_opt[1:,1], lig_opt[1:,2])]
-        if lig_xyz != []:
-            lig_xyz = np.concatenate(lig_xyz, axis=0)
+        if [inp.lig1_num, inp.lig2_num][n-1] != 0:
+            lig_generic = grow_ligand(inp, params, str(n))
+            if len(lig_generic) == 2:
+                pca_ax = np.array([1,0,0])
+            else:
+                pca.fit(lig_generic)
+                pca_ax = pca.components_[0]/np.linalg.norm(pca.components_[0])
+            if np.sum(np.mean(lig_generic, axis=0)>=0)<2:
+                pca_ax=-1*pca_ax
+            lig_generic = np.insert(lig_generic, 3, 1, axis=1).T
+            for ndx in ndxs:
+                xyz_normal_pts = np.array([staples_normals[ndx]*i for i in range(4)])*-1  #This -1 is unclear when to put it
+                xyz_generic_pts = np.array([pca_ax*i for i in range(4)])
+                trans_matrix = affine_matrix_from_points(xyz_generic_pts.T, xyz_normal_pts.T, shear=False, scale=False, usesvd=True)
+                lig_shifted = np.dot(trans_matrix, lig_generic).T[:,:3]
+                lig_shifted += staples_xyz[ndx]
+                lig_opt = optimize_ligand_orientation(lig_shifted, other_ligands)
+                lig_xyz.append(lig_opt[1:]) #Discards the first bead which belongs to the core
+                other_ligands += [[x,y,z] for x,y,z in zip(lig_opt[1:,0], lig_opt[1:,1], lig_opt[1:,2])]
+            if lig_xyz != []:
+                lig_xyz = np.concatenate(lig_xyz, axis=0)
         result.append(lig_xyz)
 
     return tuple(result)
