@@ -38,20 +38,20 @@ def get_core_bonds(core_xyz, inp):
 
     return core_bonds
 
-def get_lig_bonded_atoms(np_xyz, inp):
+def get_lig_bonded_atoms(np_xyz, lig_ndx, close_ndxs, inp):
     """
     Determines the atom indices of the ligands that are to be involved in bonds, angles, and dihedrals
     """
     logger.info("\tAssigning bonds within the ligands...")
-    lig_bonds = get_lig_bonds(np_xyz, inp)
+    lig_bonds = get_lig_bonds(np_xyz, lig_ndx, close_ndxs, inp)
     logger.info("\tAssigning angles within the ligands...")
-    lig_angles = get_lig_angles(np_xyz, inp)
+    lig_angles = get_lig_angles(np_xyz, lig_ndx, close_ndxs, inp)
     logger.info("\tAssigning dihedrals within the ligands...")
-    lig_dihedrals = get_lig_dihedrals(np_xyz, inp)
+    lig_dihedrals = get_lig_dihedrals(np_xyz, lig_ndx, close_ndxs, inp)
 
     return lig_bonds, lig_angles, lig_dihedrals
 
-def get_lig_bonds(np_xyz, inp):
+def get_lig_bonds(np_xyz, lig_ndx, close_ndxs, inp):
     """
     Determines the atom indices of the ligands that are to be involved in bonds
     """
@@ -64,7 +64,7 @@ def get_lig_bonds(np_xyz, inp):
     for i in range(inp.lig1_num):
         ndx0 = n_core + i*n_at1
         ndx1 = ndx0*1
-        ndx2 = np.argsort(cdist([np_xyz[ndx0]], core_xyz))[0,0]
+        ndx2 = close_ndxs[lig_ndx[0][i]]#np.argsort(cdist([np_xyz[ndx0]], core_xyz))[0,0]
         bond = [ndx1, ndx2]
         lig1_bonds.append(bond)
         for j in range(n_at1-1):
@@ -76,7 +76,7 @@ def get_lig_bonds(np_xyz, inp):
     for i in range(inp.lig2_num):
         ndx0 = n_core + n_at1*inp.lig1_num + i*n_at2
         ndx1 = ndx0*1
-        ndx2 = np.argsort(cdist([np_xyz[ndx0]], core_xyz))[0,0]
+        ndx2 = close_ndxs[lig_ndx[1][i]]#np.argsort(cdist([np_xyz[ndx0]], core_xyz))[0,0]
         bond = [ndx1, ndx2]
         lig2_bonds.append(bond)
         for j in range(n_at2-1):
@@ -87,7 +87,7 @@ def get_lig_bonds(np_xyz, inp):
 
     return (lig1_bonds, lig2_bonds)
 
-def get_lig_angles(np_xyz, inp):
+def get_lig_angles(np_xyz, lig_ndx, close_ndxs, inp):
     """
     Determines the atom indices of the ligands that are to be involved in angles
     """
@@ -102,7 +102,7 @@ def get_lig_angles(np_xyz, inp):
             ndx0 = n_core + i*n_at1
             ndx1 = ndx0*1
             ndx2 = ndx1 + 1
-            ndx3 = np.argsort(cdist([np_xyz[ndx1]], core_xyz))[0,0]
+            ndx3 = close_ndxs[lig_ndx[0][i]]#np.argsort(cdist([np_xyz[ndx1]], core_xyz))[0,0]
             angle = [ndx3, ndx1, ndx2]
             lig1_angles.append(angle)
             for j in range(1, n_at1-1):
@@ -117,7 +117,7 @@ def get_lig_angles(np_xyz, inp):
             ndx0 = n_core + n_at1*inp.lig1_num + i*n_at2
             ndx1 = ndx0*1
             ndx2 = ndx1 + 1
-            ndx3 = np.argsort(cdist([np_xyz[ndx1]], core_xyz))[0,0]
+            ndx3 = close_ndxs[lig_ndx[1][i]]#np.argsort(cdist([np_xyz[ndx1]], core_xyz))[0,0]
 
             angle = [ndx3, ndx1, ndx2]
             lig2_angles.append(angle)
@@ -130,7 +130,7 @@ def get_lig_angles(np_xyz, inp):
 
     return (lig1_angles, lig2_angles)
 
-def get_lig_dihedrals(np_xyz, inp):
+def get_lig_dihedrals(np_xyz, lig_ndx, close_ndxs, inp):
     """
     Determines the atom indices of the ligands that are to be involved in dihedrals
     """
@@ -146,7 +146,7 @@ def get_lig_dihedrals(np_xyz, inp):
             ndx1 = ndx0*1
             ndx2 = ndx1 + 1
             ndx3 = ndx1 + 2
-            ndx4 = np.argsort(cdist([np_xyz[ndx1]], core_xyz))[0,0]
+            ndx4 = close_ndxs[lig_ndx[0][i]]#np.argsort(cdist([np_xyz[ndx1]], core_xyz))[0,0]
             dihedral = [ndx4, ndx1, ndx2, ndx3]
             lig1_dihedrals.append(dihedral)
             for j in range(n_at1-4):
@@ -163,7 +163,7 @@ def get_lig_dihedrals(np_xyz, inp):
             ndx1 = ndx0*1
             ndx2 = ndx1 + 1
             ndx3 = ndx1 + 2
-            ndx4 = np.argsort(cdist([np_xyz[ndx1]], core_xyz))[0,0]
+            ndx4 = close_ndxs[lig_ndx[1][i]]#np.argsort(cdist([np_xyz[ndx1]], core_xyz))[0,0]
             dihedral = [ndx4, ndx1, ndx2, ndx3]
             lig2_dihedrals.append(dihedral)
             for j in range(n_at2-4):

@@ -57,6 +57,7 @@ def place_staples(core_xyz, inp):
                     #print(D)
                 close_ndxs.append(test_ndx)
             D += 1
+
     staples_xyz = core_xyz[close_ndxs]
 
     logger.info("\tSaving normal directions to the surface at the anchoring sites...")
@@ -71,7 +72,7 @@ def place_staples(core_xyz, inp):
 
     if inp.n_tot_lig == 0:
         staples_xyz, normals = [], []
-    return staples_xyz, normals
+    return staples_xyz, normals, close_ndxs
 
 def assign_morphology(staples_xyz, inp):
     """
@@ -197,7 +198,8 @@ def optimize_ligand_orientation(lig_shifted, other_ligands):
     lig_shifted = lig_shifted - displace
     intern_pca = PCA(n_components=3)
     if len(lig_shifted) == 2:
-        intern_pca_ax = np.array([1,0,0])
+        intern_pca_ax = lig_shifted[1] - lig_shifted[0]
+        intern_pca_ax /= np.linalg.norm(intern_pca_ax)
     else:
         intern_pca.fit(lig_shifted)
         intern_pca_ax = intern_pca.components_[0]/np.linalg.norm(intern_pca.components_[0])
@@ -231,7 +233,8 @@ def place_ligands(staples_xyz, staples_normals, lig_ndx, inp, params):
         if [inp.lig1_num, inp.lig2_num][n-1] != 0:
             lig_generic = grow_ligand(inp, params, str(n))
             if len(lig_generic) == 2:
-                pca_ax = np.array([1,0,0])
+                pca_ax = lig_generic[1] - lig_generic[0]
+                pca_ax /= np.linalg.norm(pca_ax)
             else:
                 pca.fit(lig_generic)
                 pca_ax = pca.components_[0]/np.linalg.norm(pca.components_[0])

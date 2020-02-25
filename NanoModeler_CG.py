@@ -219,7 +219,7 @@ def NanoModeler_CG(BEAD_RADIUS=None,
 
     #######LIGANDS#######
     logger.info("Placing ligand anchoring sites...")
-    staples_xyz, staples_normals = place_staples(core_xyz, inp)
+    staples_xyz, staples_normals, close_ndxs = place_staples(core_xyz, inp)
     logger.info("Labeling ligands to anchoring sites...")
     lig_ndx = assign_morphology(staples_xyz, inp)
     logger.info("Growing ligands...")
@@ -234,7 +234,7 @@ def NanoModeler_CG(BEAD_RADIUS=None,
         logger.info("Assigning bonds within the core...")
         core_bonds = get_core_bonds(core_xyz, inp)
         logger.info("Assigning bonded interactions within the ligands...")
-        lig_bonds, lig_angles, lig_dihedrals = get_lig_bonded_atoms(np_xyz, inp)
+        lig_bonds, lig_angles, lig_dihedrals = get_lig_bonded_atoms(np_xyz, lig_ndx, close_ndxs, inp)
         logger.info("Writing topology file (.top)...")
         top_writer(TMP, np_xyz, core_bonds, lig_bonds, lig_angles, lig_dihedrals, inp, params)
 
