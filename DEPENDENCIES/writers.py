@@ -23,13 +23,13 @@ def gro_writer(TMP, np_xyz, inp):
 
     logger.info("\tWriting the ligands...")
     for i in range(inp.lig1_num):
-        res = i + 1
+        res += 1
         for j in range(n_at1):
             ndx = n_core + i*n_at1 + j
             xyz = np_xyz[ndx]
             f.write("{:>5d}{:<5}{:>5}{:>5d}{:>8.3f}{:>8.3f}{:>8.3f}\n".format(res, "LIG1", "A{}".format(j), ndx+1, xyz[0], xyz[1], xyz[2]))
     for i in range(inp.lig2_num):
-        res = i + inp.lig1_num + 1
+        res += 1
         for j in range(n_at2):
             ndx = n_core + inp.lig1_num*n_at1 + i*n_at2 + j
             xyz = np_xyz[ndx]
@@ -73,14 +73,14 @@ def top_writer(TMP, np_xyz, core_bonds, lig_bonds, lig_angles, lig_dihedrals, in
         f.write("{:>6d} {:>4} {:>5} {:>5} {:>5} {:>5} {:>12.6f}    {:>9.5f} ; qtot {:>6.3f}\n".format(at, inp.core_btype, res, "CORE", "MM", at, 0.0, inp.core_bmass, 0.0))
     q_tot = 0
     for i in range(inp.lig1_num):
-        res = i + 1
+        res += 1
         jumps = np.linspace(0, n_at1-1, n_at1, dtype='int')
         for j, btype, charge, mass in zip(jumps, lig1_btypes_list, lig1_charges_list, lig1_masses_list):
             q_tot += charge
             at = n_core + i*n_at1 + j + 1
             f.write("{:>6d} {:>4} {:>5} {:>5} {:>5} {:>5} {:>12.6f}    {:>9.5f} ; qtot {:>6.3f}\n".format(at, btype, res, "LIG1", "A{}".format(j), at, charge, mass, q_tot))
     for i in range(inp.lig2_num):
-        res = inp.lig1_num + i + 1
+        res += 1
         jumps = np.linspace(0, n_at2-1, n_at2, dtype='int')
         for j, btype, charge, mass in zip(jumps, lig2_btypes_list, lig2_charges_list, lig2_masses_list):
             q_tot += charge

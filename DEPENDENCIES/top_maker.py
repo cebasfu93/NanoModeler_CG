@@ -84,7 +84,6 @@ def get_lig_bonds(np_xyz, lig_ndx, close_ndxs, inp):
             ndx2 = ndx1 + 1
             bond = [ndx1, ndx2]
             lig2_bonds.append(bond)
-
     return (lig1_bonds, lig2_bonds)
 
 def get_lig_angles(np_xyz, lig_ndx, close_ndxs, inp):
