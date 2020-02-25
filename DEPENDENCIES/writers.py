@@ -109,7 +109,6 @@ def top_writer(TMP, np_xyz, core_bonds, lig_bonds, lig_angles, lig_dihedrals, in
                 n_warns += 1
         logger.warning("\t\tThe nanoparticle is missing {} bond parameters in ligands {}. See above. Params not found...".format(n_warns, l))
 
-
     logger.info("\tWriting [ angles ]...")
     f.write("\n[ angles ]\n")
     f.write(";  ai    aj    ak funct        theta          cth\n")
@@ -134,7 +133,6 @@ def top_writer(TMP, np_xyz, core_bonds, lig_bonds, lig_angles, lig_dihedrals, in
     for l, lig_dihedral in enumerate(lig_dihedrals, 1):
         n_warns = 0
         for dihedral in lig_dihedral:
-            n_warns = 0
             at1 = dihedral[0] + 1
             at2 = dihedral[1] + 1
             at3 = dihedral[2] + 1
