@@ -62,7 +62,7 @@ def top_writer(TMP, np_xyz, core_bonds, lig_bonds, lig_angles, lig_dihedrals, in
     f.write("#include \"inputs/forcefield_C0_EO_MM.itp\"\n#include \"inputs/ions.itp\"\n#include \"inputs/solvents.itp\"\n")
     logger.info("\tWriting [ moleculetype ]...")
     f.write("\n[ moleculetype ]\n")
-    f.write("NP \t\t 3\n")
+    f.write("NP \t\t 1\n")
 
     logger.info("\tWriting [ atoms ]...")
     f.write("\n[ atoms ]\n")
