@@ -272,20 +272,20 @@ class Parameters:
 
         logger.info("\tLooking for bond parameters in ligand 1...")
         self.check_bond_parameters(inp, "1")
-        if n_at1 > 2:
+        if n_at1 >= 2:
             logger.info("\tLooking for angle parameters in ligand 1...")
             self.check_angle_parameters(inp, "1")
-        if n_at1 > 3:
+        if n_at1 >= 3:
             logger.info("\tLooking for dihedral parameters in ligand 1...")
             self.check_dihedral_parameters(inp, "1")
 
         if inp.lig2_num > 0:
             logger.info("\tLooking for bond parameters in ligand 2...")
             self.check_bond_parameters(inp, "2")
-            if n_at2 > 2:
+            if n_at2 >= 2:
                 logger.info("\tLooking for angle parameters in ligand 2...")
                 self.check_angle_parameters(inp, "2")
-            if n_at2 > 3:
+            if n_at2 >= 3:
                 logger.info("\tLooking for dihedral parameters in ligand 2...")
                 self.check_dihedral_parameters(inp, "2")
 

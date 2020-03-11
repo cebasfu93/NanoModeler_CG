@@ -203,8 +203,10 @@ def NanoModeler_CG(BEAD_RADIUS=None,
         core_xyz = core_shape_functions[inp.core_shape](packed_block, inp)
     else:
         core_xyz = packed_block*1
+    #print(len(core_xyz))
     logger.info("Describing the cut shape...")
     inp.characterize_core(core_xyz)
+    #print(inp.n_tot_lig)
 
     if inp.parameter_file != None:
         logger.info("User provided a topology file...")
