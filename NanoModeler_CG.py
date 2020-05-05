@@ -120,9 +120,9 @@ def NanoModeler_CG(BEAD_RADIUS=None,
     logger.info("Importing private classes...")
     from DEPENDENCIES.Extras import Input, Parameters, center, cartesian_to_polar, polar_to_cartesian, sunflower_pts, merge_coordinates
     logger.info("Importing lattice generators...")
-    from DEPENDENCIES.spatial_distributions import primitive, bcc, fcc, hcp, shell
+    from DEPENDENCIES.spatial_distributions import primitive, bcc, fcc, hcp
     logger.info("Importing shape cutters...")
-    from DEPENDENCIES.core_maker import sphere, ellipsoid, cylinder, rectangular_prism, rod, pyramid, octahedron
+    from DEPENDENCIES.core_maker import sphere, ellipsoid, cylinder, rectangular_prism, rod, pyramid, octahedron, shell
     logger.info("Importing coating functions...")
     from DEPENDENCIES.coat_maker import place_staples, assign_morphology, place_ligands
     logger.info("Importing topology builder...")
@@ -184,7 +184,6 @@ def NanoModeler_CG(BEAD_RADIUS=None,
     'bcc': bcc,
     'fcc': fcc,
     'hcp': hcp,
-    'shell': shell
     }
     core_shape_functions = {'sphere': sphere,
     'ellipsoid': ellipsoid,
@@ -192,17 +191,19 @@ def NanoModeler_CG(BEAD_RADIUS=None,
     'rectangular prism': rectangular_prism,
     'rod': rod,
     'pyramid' : pyramid,
-    'octahedron' : octahedron
+    'octahedron' : octahedron,
+    'shell': shell
     }
 
     #######CORE#######
     logger.info("Building lattice block...")
-    packed_block = core_packing_functions[inp.core_method](inp)
-    logger.info("Cropping block into target shape...")
-    if inp.core_shape != 'shape':
-        core_xyz = core_shape_functions[inp.core_shape](packed_block, inp)
+    if inp.core_shape != "shell":
+        packed_block = core_packing_functions[inp.core_method](inp)
     else:
-        core_xyz = packed_block*1
+        packed_block = []
+    logger.info("Cropping block into target shape...")
+    core_xyz = core_shape_functions[inp.core_shape](packed_block, inp)
+
     #print(len(core_xyz))
     logger.info("Describing the cut shape...")
     inp.characterize_core(core_xyz)
@@ -253,7 +254,7 @@ if __name__ == "__main__":
     CORE_RADIUS=1.5,
     CORE_METHOD="fcc",
     CORE_DENSITY=19.3, #g/cm3 of the material
-    CORE_SHAPE="rectangular prism",
+    CORE_SHAPE="shell",
     CORE_CYLINDER=[2.5,4], #Radius and length respectively. Only read if CORE_SHAPE is "cylinder"
     CORE_ELLIPSE_AXIS=[1.5,3,4.5], #Only read if CORE_SHAPE is "ellipsoid"
     CORE_RECT_PRISM=[2,4,6], #Only read if CORE_SHAPE is "rectangular prism"
@@ -264,7 +265,7 @@ if __name__ == "__main__":
     CORE_EN=True,
     CORE_EN_K=5000,
 
-    GRAFT_DENSITY=0.152, #0.216nm2 thiol-1
+    GRAFT_DENSITY=0.01, #0.152, #0.216nm2 thiol-1
 
     LIG1_N_PER_BEAD=[1,3,1],
     LIG1_BTYPES=["C1", "EO", "SP2"],
