@@ -97,7 +97,7 @@ def hcp(inp):
             xyz = np.append(xyz, [i*2, j*2*np.sqrt(3),k*2*np.sqrt(6)/3])
             xyz = np.append(xyz, [2*i+1, (2*j+1)*np.sqrt(3),k*2*np.sqrt(6)/3])
 
-    xyz = xyz*brad_opt
+    xyz = xyz*const/2
     xyz = xyz.reshape((len(xyz)//3,3))
     xyz = np.unique(xyz, axis=0)
     xyz = center(xyz)
