@@ -161,7 +161,7 @@ def shell(block, inp):
     Else, concentric rings are built to approximate the theoretical area-per-bead
     """
     logger.info("\tConstructing hollow shell...")
-    n_beads_trial = int(inp.bead_radius**2/(4*(inp.core_radius**2)))
+    n_beads_trial = int((4*(inp.core_radius**2))/inp.bead_radius**2)
     if n_beads_trial <= 300:
         logger.info("\tCore beads will be placed minimizing electric energy following a Monte Carlo approach. This will place the beads as far away as possible from one another...")
         core = ThomsonMC(n=n_beads_trial, mcs=1000, sigma=0.01)*inp.core_radius

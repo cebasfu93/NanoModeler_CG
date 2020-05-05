@@ -67,7 +67,8 @@ def place_staples(core_xyz, inp):
     'rectangular prism': rectangular_prism_normal,
     'rod': rod_normal,
     'pyramid' : pyramid_normal,
-    'octahedron' : octahedron_normal}
+    'octahedron' : octahedron_normal,
+    'shell' : sphere_normal}
     normals = np.array([normal_functions[inp.core_shape](staple, inp) for staple in staples_xyz])
 
     if inp.n_tot_lig == 0:
