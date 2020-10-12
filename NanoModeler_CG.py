@@ -254,10 +254,10 @@ if __name__ == "__main__":
     CORE_RADIUS=1.5,
     CORE_METHOD="fcc",
     CORE_DENSITY=19.3, #g/cm3 of the material
-    CORE_SHAPE="shell",
+    CORE_SHAPE="rectangular prism",
     CORE_CYLINDER=[2.5,4], #Radius and length respectively. Only read if CORE_SHAPE is "cylinder"
     CORE_ELLIPSE_AXIS=[1.5,3,4.5], #Only read if CORE_SHAPE is "ellipsoid"
-    CORE_RECT_PRISM=[2,4,6], #Only read if CORE_SHAPE is "rectangular prism"
+    CORE_RECT_PRISM=[3,5,7], #Only read if CORE_SHAPE is "rectangular prism"
     CORE_ROD_PARAMS=[2.5, 4], #Caps radius and cylinder length respectively. Only read if CORE_SHAPE is "rod"
     CORE_PYRAMID=[5,5], #Base edge and height respectively. Only read if CORE_SHAPE is "pyramid"
     CORE_OCTAHEDRON_EDGE=6, #Edge size of a regular octahedron. Only read if CORE_SHAPE is "octahedron"
@@ -267,18 +267,18 @@ if __name__ == "__main__":
 
     GRAFT_DENSITY=0.01, #0.152, #0.216nm2 thiol-1
 
-    LIG1_N_PER_BEAD=[1,3,1],
-    LIG1_BTYPES=["C1", "EO", "SP2"],
-    LIG1_CHARGES=[0,0,0],
-    LIG1_MASSES=[56,44,31],
-    LIG1_FRAC=1.0,
+    LIG1_N_PER_BEAD=[3],
+    LIG1_BTYPES=["C1"],
+    LIG1_CHARGES=[0],
+    LIG1_MASSES=[56],
+    LIG1_FRAC=0.5,
 
-    LIG2_N_PER_BEAD=[],
-    LIG2_BTYPES=[],
-    LIG2_CHARGES=[],
-    LIG2_MASSES=[],
+    LIG2_N_PER_BEAD=[3],
+    LIG2_BTYPES=["C1"],
+    LIG2_CHARGES=[0],
+    LIG2_MASSES=[56],
 
-    MORPHOLOGY='random', #random, janus_x, janus_y, janus_z, stripe_x, stripe_y, stripe_z
+    MORPHOLOGY='stripe_y', #random, janus_x, janus_y, janus_z, stripe_x, stripe_y, stripe_z
     RSEED=666,# None
     STRIPES=4,
 
