@@ -1,0 +1,26 @@
+[ bondtypes ]
+; i j 	funct 	length 	force.c. params from PEG paper
+  C1  C1        1       0.470   1250
+  C1  EO        1       0.410   7000
+  C1  C1        1       0.470	1250
+  C1  EO        1       0.410   7000
+  EO  EO        1       0.322   7000
+  SP2 EO        1       0.280   7000
+
+[ angletypes ]
+; i j k 	funct 	angle 	force.c.
+  C1  C1  C1    2      180   25
+  C1  C1  EO    2      180   82
+  C1  EO  EO    2      135   50
+  C1  EO  EO   10      135   75
+  EO  EO  EO    2      135   50
+  EO  EO  EO   10      135   75
+  SP2 EO  EO    2      140   25
+
+
+[ dihedraltypes ]
+; i   j   k   l   func   phi0   kphi   m
+  EO  EO  EO  EO     1     0    0.12   4
+  EO  EO  EO  EO     1     0    0.33   3
+  EO  EO  EO  EO     1     0    0.18   2
+  EO  EO  EO  EO     1   180    1.96   1
