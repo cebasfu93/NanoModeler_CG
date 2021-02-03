@@ -176,7 +176,7 @@ class Parameters:
             if bondtypes_section == True:
                 if ("[ " in line) and (" ]" in line):
                     break
-                if ";"!=line[0] and line!="\n":
+                if ";"!=line[0] and line.strip():
                     bond_info.append(line.split())
             if "[ bondtypes ]" in line:
                 bondtypes_section = True
@@ -193,7 +193,7 @@ class Parameters:
             if angletypes_section == True:
                 if ("[ " in line) and (" ]" in line):
                     break
-                if ";"!=line[0] and line!="\n":
+                if ";"!=line[0] and line.strip():
                     angle_info.append(line.split())
             if "[ angletypes ]" in line:
                 angletypes_section = True
@@ -217,7 +217,7 @@ class Parameters:
             if dihedraltypes_section == True:
                 if ("[ " in line) and (" ]" in line):
                     break
-                if ";"!=line[0] and line!="\n":
+                if ";"!=line[0] and line.strip():
                     dihedral_info.append(line.split())
             if "[ dihedraltypes ]" in line:
                 dihedraltypes_section = True
