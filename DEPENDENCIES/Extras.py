@@ -49,7 +49,7 @@ class Input:
         self.lig2_masses = lig2_masses
         if self.lig1_frac == 1.0 or self.lig1_frac == 0.0:
             self.morph = "homogeneous"
-        elif self.lig1_frac == None and 'stripe' not in morph:
+        elif self.lig1_frac == None and morph == None:
             self.morph = "homogeneous"
             self.lig1_frac = 1.0
         else:
