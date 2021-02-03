@@ -37,13 +37,14 @@ def place_staples(core_xyz, inp):
     logger.info("\tThe surface beads of the core allow a maximum of {} ligands...".format(np.sum(surface)))
     if np.sum(surface) < inp.n_tot_lig:
         inp.n_tot_lig = np.sum(surface)
-        inp.lig1_num = int(inp.n_tot_lig * inp.lig1_frac)
-        inp.lig2_num = inp.n_tot_lig - inp.lig1_num
         logger.warning("\tATTENTION. The grafting density is too high to meet requirements...")
         logger.warning("\t\tResetting total number of ligands to {}".format(inp.n_tot_lig))
         logger.warning("\t\tNew grafting density set to {:.3f}".format(inp.area/inp.n_tot_lig))
-        logger.warning("\t\tNumber of ligands 1: {}".format(inp.lig1_num))
-        logger.warning("\t\tNumber of ligands 2: {}".format(inp.lig2_num))
+        if "stripe" not in inp.morph:
+            inp.lig1_num = int(inp.n_tot_lig * inp.lig1_frac)
+            inp.lig2_num = inp.n_tot_lig - inp.lig1_num
+            logger.warning("\t\tNumber of ligands 1: {}".format(inp.lig1_num))
+            logger.warning("\t\tNumber of ligands 2: {}".format(inp.lig2_num))
 
     core_vir_dists = cdist(cartesian_to_polar(virtual_xyz)[:,1:], cartesian_to_polar(core_xyz)[:,1:])
     core_vir_dists_sort = np.argsort(core_vir_dists, axis=1)
@@ -106,6 +107,8 @@ def assign_morphology(staples_xyz, inp):
                 lig2_ndx.append(i)
         inp.lig1_num = len(lig1_ndx)
         inp.lig2_num = len(lig2_ndx)
+        logger.warning("\t\tNumber of ligands 1: {}".format(inp.lig1_num))
+        logger.warning("\t\tNumber of ligands 2: {}".format(inp.lig2_num))
 
     elif inp.morph == 'random':
         logger.info("\tDistributing ligands in a Random configuration...")

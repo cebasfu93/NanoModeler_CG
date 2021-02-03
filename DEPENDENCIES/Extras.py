@@ -47,8 +47,7 @@ class Input:
         self.lig2_btypes = lig2_btypes
         self.lig2_charges = lig2_charges
         self.lig2_masses = lig2_masses
-
-        if self.lig1_frac == None or self.lig1_frac == 1.0 or self.lig1_frac == 0.0:
+        if self.lig1_frac == 1.0 or self.lig1_frac == 0.0 or (self.lig1_frac == None and 'stripe' not in morph):
             self.morph = "homogeneous"
         else:
             self.morph = morph
@@ -148,11 +147,15 @@ class Input:
         self.n_tot_lig = int(self.area/self.graft_density)
         logger.info("\t\tTotal number of ligands: {}".format(self.n_tot_lig))
         logger.info("\tCalculating number of ligands 1...")
-        self.lig1_num = int(self.n_tot_lig * self.lig1_frac)
-        logger.info("\t\tNumber of ligands 1: {}".format(self.lig1_num))
-        logger.info("\tCalculating number of ligands 2...")
-        self.lig2_num = self.n_tot_lig - self.lig1_num
-        logger.info("\t\tNumber of ligands 2: {}".format(self.lig2_num))
+        if self.lig1_frac == None:
+            self.lig1_num = 0
+            self.lig2_num = 0
+        else:
+            self.lig1_num = int(self.n_tot_lig * self.lig1_frac)
+            logger.info("\t\tNumber of ligands 1: {}".format(self.lig1_num))
+            logger.info("\tCalculating number of ligands 2...")
+            self.lig2_num = self.n_tot_lig - self.lig1_num
+            logger.info("\t\tNumber of ligands 2: {}".format(self.lig2_num))
 
 class Parameters:
     """
