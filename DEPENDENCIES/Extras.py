@@ -300,11 +300,11 @@ def build_lig_btypes_list_n(inp, lig1or2):
     Builds list with all the bead types (with repetition) present in a given ligand
     """
     if lig1or2 == "1":
-        lig_btypes = inp.lig1_btypes*1
-        lig_n_per_bead = inp.lig1_n_per_bead*1
+        lig_btypes = inp.lig1_btypes
+        lig_n_per_bead = inp.lig1_n_per_bead
     elif lig1or2 == "2":
-        lig_btypes = inp.lig2_btypes*1
-        lig_n_per_bead = inp.lig2_n_per_bead*1
+        lig_btypes = inp.lig2_btypes
+        lig_n_per_bead = inp.lig2_n_per_bead
     lig_btypes_list = [inp.core_btype]
     for i in range(len(lig_btypes)):
         lig_btypes_list += [lig_btypes[i]]*lig_n_per_bead[i]
