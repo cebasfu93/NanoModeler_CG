@@ -75,4 +75,4 @@ def octahedron_normal(xyz, inp):
     D = np.array(D)
     dists = np.divide(np.abs(np.dot(plane_normals, xyz)+D), np.linalg.norm(plane_normals, axis=1))
     normals = plane_normals[np.argmin(dists)]
-    return normals    
+    return normals

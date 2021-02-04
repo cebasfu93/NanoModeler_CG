@@ -54,8 +54,6 @@ def place_staples(core_xyz, inp):
         while len(close_ndxs) != i+1:
             test_ndx = core_vir_dists_sort[i,D]
             if test_ndx not in close_ndxs and surface[test_ndx]:
-                #if D != 0:
-                    #print(D)
                 close_ndxs.append(test_ndx)
             D += 1
 
@@ -243,11 +241,10 @@ def place_ligands(staples_xyz, staples_normals, lig_ndx, inp, params):
             else:
                 pca.fit(lig_generic)
                 pca_ax = pca.components_[0]/np.linalg.norm(pca.components_[0])
-            #print(pca_ax)
-            #if np.sum(np.mean(lig_generic, axis=0)>=0)<2:
+
             if np.sum(pca_ax<0)>=2:
                 pca_ax=-1*pca_ax
-            #print(pca_ax)
+
             if(np.isclose(np.abs(np.dot(pca_ax, [1,0,0])), [1], 0.01)):
                 pca_ax = np.array([1,0,0])
             lig_generic = np.insert(lig_generic, 3, 1, axis=1).T
