@@ -259,22 +259,22 @@ if __name__ == "__main__":
     CORE_RADIUS=2.5,
     CORE_METHOD="bcc",#"fcc",
     CORE_DENSITY=1.0, #g/cm3 of the material
-    CORE_SHAPE="shell",
+    CORE_SHAPE="octahedron",
     CORE_CYLINDER=[1.5,10.0],#[2.5,4], #Radius and length respectively. Only read if CORE_SHAPE is "cylinder"
     CORE_ELLIPSE_AXIS=[],#[1.5,3,4.5], #Only read if CORE_SHAPE is "ellipsoid"
     CORE_RECT_PRISM=[],#[2,4,6], #Only read if CORE_SHAPE is "rectangular prism"
     CORE_ROD_PARAMS=[],#[2.5, 4], #Caps radius and cylinder length respectively. Only read if CORE_SHAPE is "rod"
     CORE_PYRAMID=[],#[5,5], #Base edge and height respectively. Only read if CORE_SHAPE is "pyramid"
-    CORE_OCTAHEDRON_EDGE=None,#6, #Edge size of a regular octahedron. Only read if CORE_SHAPE is "octahedron"
+    CORE_OCTAHEDRON_EDGE=6,#6, #Edge size of a regular octahedron. Only read if CORE_SHAPE is "octahedron"
     CORE_BTYPE="AC",
     CORE_EN=True,
     CORE_EN_K=1.0,
 
-    GRAFT_DENSITY=100.0, #0.152, #0.216nm2 thiol-1
+    GRAFT_DENSITY=0.15, #0.152, #0.216nm2 thiol-1
 
-    LIG1_N_PER_BEAD=[81],
+    LIG1_N_PER_BEAD=[8],
     LIG1_BTYPES=['ACD'],
-    LIG1_CHARGES=[100.0],
+    LIG1_CHARGES=[0.0],
     LIG1_MASSES=[10.0],
     LIG1_FRAC=1.0, #1.0,
 

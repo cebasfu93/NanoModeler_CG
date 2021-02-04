@@ -91,7 +91,6 @@ def pyramid(block, inp):
         cond = np.dot(coef[:3], block.T) <= coef[3]
         conditions.append(cond)
 
-
     conditions = np.array(conditions)
     condition = np.all(conditions, axis=0)
     core = block[condition]

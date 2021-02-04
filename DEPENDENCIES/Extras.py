@@ -150,7 +150,9 @@ class Input:
         self.n_tot_lig = int(self.area/self.graft_density)
         logger.info("\t\tTotal number of ligands: {}".format(self.n_tot_lig))
         logger.info("\tCalculating number of ligands 1...")
-        if self.lig1_frac == None:
+
+        if 'stripe' in self.morph:
+            logger.info("This will be calculated later because you chose a striped morphology...")
             self.lig1_num = 0
             self.lig2_num = 0
         else:
@@ -178,12 +180,16 @@ class Parameters:
                     break
                 if ";"!=line[0] and line.strip():
                     bond_info.append(line.split())
-            if "[ bondtypes ]" in line:
+            if "[bondtypes]" in line.replace(" ", ""):
                 bondtypes_section = True
-        bonds = {"{}-{}".format(bond[0], bond[1]) : [int(bond[2]), float(bond[3]), float(bond[4])] for bond in bond_info}
-        bonds2 = {"{}-{}".format(bond[1], bond[0]) : [int(bond[2]), float(bond[3]), float(bond[4])] for bond in bond_info}
-        bonds.update(bonds2)
-        self.bondtypes = bonds
+        try:
+            bonds = {"{}-{}".format(bond[0], bond[1]) : [int(bond[2]), float(bond[3]), float(bond[4])] for bond in bond_info}
+            bonds2 = {"{}-{}".format(bond[1], bond[0]) : [int(bond[2]), float(bond[3]), float(bond[4])] for bond in bond_info}
+            bonds.update(bonds2)
+            self.bondtypes = bonds
+        except:
+            logger.error("Could not read bondtypes section. Bond parameters should follow the format 'BeadType BeadType Function Length ForceConstant'!")
+            self.bondtypes = {}
 
         angletypes_section = False
         angle_info = []
@@ -195,19 +201,23 @@ class Parameters:
                     break
                 if ";"!=line[0] and line.strip():
                     angle_info.append(line.split())
-            if "[ angletypes ]" in line:
+            if "[angletypes]" in line.replace(" ", ""):
                 angletypes_section = True
-        for angle in angle_info:
-            a_key = "{}-{}-{}".format(angle[0], angle[1], angle[2])
-            a_key_invert = "{}-{}-{}".format(angle[2], angle[1], angle[0])
-            if a_key in angles.keys():
-                angles[a_key] += [[int(angle[3]), float(angle[4]), float(angle[5])]]
-                angles2[a_key_invert] += [[int(angle[3]), float(angle[4]), float(angle[5])]]
-            else:
-                angles[a_key] = [[int(angle[3]), float(angle[4]), float(angle[5])]]
-                angles2[a_key_invert] = [[int(angle[3]), float(angle[4]), float(angle[5])]]
-        angles.update(angles2)
-        self.angletypes = angles
+        try:
+            for angle in angle_info:
+                a_key = "{}-{}-{}".format(angle[0], angle[1], angle[2])
+                a_key_invert = "{}-{}-{}".format(angle[2], angle[1], angle[0])
+                if a_key in angles.keys():
+                    angles[a_key] += [[int(angle[3]), float(angle[4]), float(angle[5])]]
+                    angles2[a_key_invert] += [[int(angle[3]), float(angle[4]), float(angle[5])]]
+                else:
+                    angles[a_key] = [[int(angle[3]), float(angle[4]), float(angle[5])]]
+                    angles2[a_key_invert] = [[int(angle[3]), float(angle[4]), float(angle[5])]]
+            angles.update(angles2)
+            self.angletypes = angles
+        except:
+            logger.error("Could not read angletypes section. Angle parameters should follow the format 'BeadType BeadType BeadType Function Angle ForceConstant'!")
+            self.angletypes = {}
 
         dihedraltypes_section = False
         dihedral_info = []
@@ -219,19 +229,23 @@ class Parameters:
                     break
                 if ";"!=line[0] and line.strip():
                     dihedral_info.append(line.split())
-            if "[ dihedraltypes ]" in line:
+            if "[dihedraltypes]" in line.replace(" ", ""):
                 dihedraltypes_section = True
-        for dihedral in dihedral_info:
-            d_key = "{}-{}-{}-{}".format(dihedral[0], dihedral[1], dihedral[2], dihedral[3])
-            d_key_invert = "{}-{}-{}-{}".format(dihedral[3], dihedral[2], dihedral[1], dihedral[0])
-            if d_key in dihedrals.keys():
-                dihedrals[d_key] += [[int(dihedral[4]), float(dihedral[5]), float(dihedral[6]), int(dihedral[7])]]
-                dihedrals2[d_key_invert] += [[int(dihedral[4]), float(dihedral[5]), float(dihedral[6]), int(dihedral[7])]]
-            else:
-                dihedrals[d_key] = [[int(dihedral[4]), float(dihedral[5]), float(dihedral[6]), int(dihedral[7])]]
-                dihedrals2[d_key_invert] = [[int(dihedral[4]), float(dihedral[5]), float(dihedral[6]), int(dihedral[7])]]
-        dihedrals.update(dihedrals2)
-        self.dihedraltypes = dihedrals
+        try:
+            for dihedral in dihedral_info:
+                d_key = "{}-{}-{}-{}".format(dihedral[0], dihedral[1], dihedral[2], dihedral[3])
+                d_key_invert = "{}-{}-{}-{}".format(dihedral[3], dihedral[2], dihedral[1], dihedral[0])
+                if d_key in dihedrals.keys():
+                    dihedrals[d_key] += [[int(dihedral[4]), float(dihedral[5]), float(dihedral[6]), int(dihedral[7])]]
+                    dihedrals2[d_key_invert] += [[int(dihedral[4]), float(dihedral[5]), float(dihedral[6]), int(dihedral[7])]]
+                else:
+                    dihedrals[d_key] = [[int(dihedral[4]), float(dihedral[5]), float(dihedral[6]), int(dihedral[7])]]
+                    dihedrals2[d_key_invert] = [[int(dihedral[4]), float(dihedral[5]), float(dihedral[6]), int(dihedral[7])]]
+            dihedrals.update(dihedrals2)
+            self.dihedraltypes = dihedrals
+        except:
+            logger.error("Could not read dihedraltypes section. Dihedral parameters should follow the format 'BeadType BeadType BeadType Function Angle ForceConstant Multiplicity'!")
+            self.dihedraltypes = {}
 
     def check_bond_parameters(self, inp, lig1or2):
         """
@@ -242,8 +256,7 @@ class Parameters:
         if np.any(np.invert(bond_checks)):
             no_params_ndx = np.where(np.invert(bond_checks))[0]
             missing_pairs = ["{}-{}".format(lig_btypes[ndx], lig_btypes[ndx+1]) for ndx in no_params_ndx]
-            warn_txt = "ATTENTION. Missing parameters for bonds: {}".format(np.unique(missing_pairs))
-            logger.warning(warn_txt)
+            logger.warning("ATTENTION. Missing parameters for bonds: {}".format(np.unique(missing_pairs)))
 
     def check_angle_parameters(self, inp, lig1or2):
         """
@@ -254,8 +267,7 @@ class Parameters:
         if np.any(np.invert(angle_checks)):
             no_params_ndx = np.where(np.invert(angle_checks))[0]
             missing_pairs = ["{}-{}-{}".format(lig_btypes[ndx], lig_btypes[ndx+1], lig_btypes[ndx+2]) for ndx in no_params_ndx]
-            warn_txt = "ATTENTION. Missing parameters for angles: {}".format(np.unique(missing_pairs))
-            logger.warning(warn_txt)
+            logger.warning("ATTENTION. Missing parameters for angles: {}".format(np.unique(missing_pairs)))
 
     def check_dihedral_parameters(self, inp, lig1or2):
         """
@@ -266,8 +278,7 @@ class Parameters:
         if np.any(np.invert(dihedral_checks)):
             no_params_ndx = np.where(np.invert(dihedral_checks))[0]
             missing_pairs = ["{}-{}-{}-{}".format(lig_btypes[ndx], lig_btypes[ndx+1], lig_btypes[ndx+2], lig_btypes[ndx+3]) for ndx in no_params_ndx]
-            warn_txt = "ATTENTION. Missing parameters for dihedral: {}".format(np.unique(missing_pairs))
-            logger.warning(warn_txt)
+            logger.warning("ATTENTION. Missing parameters for dihedral: {}".format(np.unique(missing_pairs)))
 
     def check_missing_parameters(self, inp):
         """

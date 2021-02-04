@@ -22,7 +22,8 @@ shapes_parts = {
 'cylinder' : ['radius', 'length'],
 'rectangular prism' : ['X-length', 'Y-length', 'Z-length'],
 'rod' : ['cap radius', 'body length'],
-'pyramid' : ['base edge-length', 'height']
+'pyramid' : ['base edge-length', 'height'],
+'octahedron' : ['edge-length']
 }
 
 def check_core_dimensions(inp):
