@@ -25,11 +25,11 @@ class Input:
         self.core_method = core_method
         self.core_density = core_density
         self.core_shape = core_shape
-        self.core_cylinder = core_cylinder
-        self.core_ellipse_axis = core_ellipse_axis
-        self.core_rect_prism = core_rect_prism
-        self.core_rod_params = core_rod_params
-        self.core_pyramid = core_pyramid
+        self.core_cylinder = np.array(core_cylinder)
+        self.core_ellipse_axis = np.array(core_ellipse_axis)
+        self.core_rect_prism = np.array(core_rect_prism)
+        self.core_rod_params = np.array(core_rod_params)
+        self.core_pyramid = np.array(core_pyramid)
         self.core_octahedron = core_octahedron
         self.core_btype = core_btype
         self.core_en = core_en
@@ -37,16 +37,16 @@ class Input:
 
         self.graft_density = graft_density
 
-        self.lig1_n_per_bead = lig1_n_per_bead
-        self.lig1_btypes = lig1_btypes
-        self.lig1_charges = lig1_charges
-        self.lig1_masses = lig1_masses
+        self.lig1_n_per_bead = np.array(lig1_n_per_bead)
+        self.lig1_btypes = np.array(lig1_btypes)
+        self.lig1_charges =np.array (lig1_charges)
+        self.lig1_masses = np.array(lig1_masses)
         self.lig1_frac = lig1_frac
 
-        self.lig2_n_per_bead = lig2_n_per_bead
-        self.lig2_btypes = lig2_btypes
-        self.lig2_charges = lig2_charges
-        self.lig2_masses = lig2_masses
+        self.lig2_n_per_bead = np.array(lig2_n_per_bead)
+        self.lig2_btypes = np.array(lig2_btypes)
+        self.lig2_charges = np.array(lig2_charges)
+        self.lig2_masses = np.array(lig2_masses)
         if self.lig1_frac == 1.0 or self.lig1_frac == 0.0:
             self.morph = "homogeneous"
         elif self.lig1_frac == None and morph == None:
