@@ -3,7 +3,7 @@ import logging
 logger = logging.getLogger('nanomodelercg')
 logger.addHandler(logging.NullHandler())
 
-__VERSION__ = "0.1.0"
+__VERSION__ = "1.0.0"
 
 def getVersion():
     return __VERSION__
@@ -123,6 +123,8 @@ def NanoModeler_CG(BEAD_RADIUS=None,
     from DEPENDENCIES.spatial_distributions import primitive, bcc, fcc, hcp
     logger.info("Importing shape cutters...")
     from DEPENDENCIES.core_maker import sphere, ellipsoid, cylinder, rectangular_prism, rod, pyramid, octahedron, shell
+    logger.info("Importing shape checker...")
+    from DEPENDENCIES.check import check_core_dimensions, check_ligand_length
     logger.info("Importing coating functions...")
     from DEPENDENCIES.coat_maker import place_staples, assign_morphology, place_ligands
     logger.info("Importing topology builder...")
@@ -195,6 +197,11 @@ def NanoModeler_CG(BEAD_RADIUS=None,
     'shell': shell
     }
 
+    #######CHECK PARAMETERS######
+    logger.info("Checking input parameters...")
+    check_core_dimensions(inp)
+    check_ligand_length(inp)
+
     #######CORE#######
     logger.info("Building lattice block...")
     if inp.core_shape != "shell":
@@ -204,10 +211,8 @@ def NanoModeler_CG(BEAD_RADIUS=None,
     logger.info("Cropping block into target shape...")
     core_xyz = core_shape_functions[inp.core_shape](packed_block, inp)
 
-    #print(len(core_xyz))
     logger.info("Describing the cut shape...")
     inp.characterize_core(core_xyz)
-    #print(inp.n_tot_lig)
 
     if inp.parameter_file != None:
         logger.info("User provided a topology file...")
@@ -252,34 +257,34 @@ if __name__ == "__main__":
     NanoModeler_CG(BEAD_RADIUS=0.26,
 
     CORE_RADIUS=2.5,
-    CORE_METHOD="fcc",
-    CORE_DENSITY=19.3, #g/cm3 of the material
-    CORE_SHAPE="sphere",
-    CORE_CYLINDER=[],#[2.5,4], #Radius and length respectively. Only read if CORE_SHAPE is "cylinder"
+    CORE_METHOD="bcc",#"fcc",
+    CORE_DENSITY=1.0, #g/cm3 of the material
+    CORE_SHAPE="shell",
+    CORE_CYLINDER=[1.5,10.0],#[2.5,4], #Radius and length respectively. Only read if CORE_SHAPE is "cylinder"
     CORE_ELLIPSE_AXIS=[],#[1.5,3,4.5], #Only read if CORE_SHAPE is "ellipsoid"
     CORE_RECT_PRISM=[],#[2,4,6], #Only read if CORE_SHAPE is "rectangular prism"
     CORE_ROD_PARAMS=[],#[2.5, 4], #Caps radius and cylinder length respectively. Only read if CORE_SHAPE is "rod"
     CORE_PYRAMID=[],#[5,5], #Base edge and height respectively. Only read if CORE_SHAPE is "pyramid"
     CORE_OCTAHEDRON_EDGE=None,#6, #Edge size of a regular octahedron. Only read if CORE_SHAPE is "octahedron"
-    CORE_BTYPE="C1",
+    CORE_BTYPE="AC",
     CORE_EN=True,
-    CORE_EN_K=5000,
+    CORE_EN_K=1.0,
 
-    GRAFT_DENSITY=0.01, #0.152, #0.216nm2 thiol-1
+    GRAFT_DENSITY=100.0, #0.152, #0.216nm2 thiol-1
 
-    LIG1_N_PER_BEAD=[1,1],
-    LIG1_BTYPES=["C1", "C1"],
-    LIG1_CHARGES=[0,0],
-    LIG1_MASSES=[56,57],
-    LIG1_FRAC=None, #1.0,
+    LIG1_N_PER_BEAD=[81],
+    LIG1_BTYPES=['ACD'],
+    LIG1_CHARGES=[100.0],
+    LIG1_MASSES=[10.0],
+    LIG1_FRAC=1.0, #1.0,
 
-    LIG2_N_PER_BEAD=[1,1],#[9, 1],
-    LIG2_BTYPES=["C2", "C2"],#,["EO", "SP2"],
-    LIG2_CHARGES=[0,0],#[0,0],
-    LIG2_MASSES=[56,57],#[44, 31],
+    LIG2_N_PER_BEAD=[],#[9, 1],
+    LIG2_BTYPES=[],#,["EO", "SP2"],
+    LIG2_CHARGES=[],#[0,0],
+    LIG2_MASSES=[],#[44, 31],
 
-    MORPHOLOGY='stripe_z',#random, janus_x, janus_y, janus_z, stripe_x, stripe_y, stripe_z
+    MORPHOLOGY='homogeneous',#random, janus_x, janus_y, janus_z, stripe_x, stripe_y, stripe_z
     RSEED=None, #1,# None
-    STRIPES=5,
+    STRIPES=None,
 
-    PARAMETER_FILE=open('ALK.itp', 'r'))
+    PARAMETER_FILE=open('./ALK.itp', 'r'))

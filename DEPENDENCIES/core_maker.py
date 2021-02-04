@@ -174,9 +174,7 @@ def shell(block, inp):
         elif inp.core_radius > 1.5:
             trial_areas = np.linspace(a_ini/(inp.core_radius**2), a_ini*(inp.core_radius**2), 300)
         else:
-            err_txt = "Unsupported combination of build-mode and nanoparticle radius"
-            raise Exception(err_txt)
-
+            logger.error("Unsupported combination of build-mode and nanoparticle radius")
         diff = 1
 
         for area in trial_areas:
