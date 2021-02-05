@@ -11,14 +11,16 @@ def get_core_bonds(core_xyz, inp):
     """
     core_bonds = []
 
+    #Searches for bead pairs bonded by an elastic network
     if inp.core_en:
-        dists = cdist(core_xyz, core_xyz)
+        dists = cdist(core_xyz, core_xyz) #distance between all core beads and all core beads
         if inp.core_shape != "shell":
             logger.info("\tBuilding elastic network based on first neighbors...")
-            close_dists = dists <= (2*inp.bead_radius+0.01)
+            close_dists = dists <= (2*inp.bead_radius+0.01) #keeps bead ids of pair within a threshold distance
             for i in range(len(dists)):
-                ndx1 = i*1
+                ndx1 = i*1 #to avoid dynamic overwriting of memory
                 close_ndxs = np.where(close_dists[i])[0]
+                #This conditional catches core bead with very few neighbors as it can happen with the tip in a pyramid or an octahedron
                 if len(close_ndxs) == 1:
                     dists_sorted = np.argsort(dists[i])
                     try:
@@ -26,7 +28,7 @@ def get_core_bonds(core_xyz, inp):
                     except:
                         logger.error("Something does not look right with your {} ({}) NP. Try making it bigger or making smaller the core bead radius!".format(inp.core_shape, inp.core_method))
                 for ndx2 in close_ndxs:
-                    if ndx2 != i and [ndx1, ndx2] not in core_bonds and [ndx2, ndx1] not in core_bonds:
+                    if ndx2 != i and [ndx1, ndx2] not in core_bonds and [ndx2, ndx1] not in core_bonds: #checls that the bead pair was not already added to core_bonds (otherwise it would write twice some bonds)
                         core_bonds.append([ndx1, ndx2])
 
         else:
@@ -35,7 +37,7 @@ def get_core_bonds(core_xyz, inp):
             for i in range(len(dists)):
                 ndx1 = i*1
                 try:
-                    close_ndxs = dists_sorted[i,[1,2,3,4,5,6,-1]]
+                    close_ndxs = dists_sorted[i,[1,2,3,4,5,6,-1]] #the elastic network of shells bonds each bead with its 6 nearest neighbors and the antipodal bead
                 except:
                     logger.error("Something does not look right with your shell NP. Try making it bigger or making smaller the core bead radius!")
                 for ndx2 in close_ndxs:
@@ -61,17 +63,18 @@ def get_lig_bonds(np_xyz, lig_ndx, close_ndxs, inp):
     """
     Determines the atom indices of the ligands that are to be involved in bonds
     """
-    n_at1, n_at2 = np.sum(inp.lig1_n_per_bead), np.sum(inp.lig2_n_per_bead)
-    n_core = int(len(np_xyz) - inp.lig1_num*n_at1 - inp.lig2_num*n_at2)
+    n_at1, n_at2 = np.sum(inp.lig1_n_per_bead), np.sum(inp.lig2_n_per_bead) #total number of bead in each copy of Ligand 1 and Ligand 2
+    n_core = int(len(np_xyz) - inp.lig1_num*n_at1 - inp.lig2_num*n_at2) #number of beads in the core
     core_xyz = np_xyz[:n_core]
 
     lig1_bonds, lig2_bonds = [], []
 
+    #Searches for bead pairs bonded inside Ligand 1
     for i in range(inp.lig1_num):
         ndx0 = n_core + i*n_at1
         ndx1 = ndx0*1
-        ndx2 = close_ndxs[lig_ndx[0][i]]#np.argsort(cdist([np_xyz[ndx0]], core_xyz))[0,0]
-        bond = [ndx1, ndx2]
+        ndx2 = close_ndxs[lig_ndx[0][i]]
+        bond = [ndx1, ndx2] #bond beteen the core's staple and the first bead of the ligand
         lig1_bonds.append(bond)
         for j in range(n_at1-1):
             ndx1 = ndx0 + j
@@ -79,10 +82,11 @@ def get_lig_bonds(np_xyz, lig_ndx, close_ndxs, inp):
             bond = [ndx1, ndx2]
             lig1_bonds.append(bond)
 
+    #Searches for bead pairs bonded inside Ligand 2
     for i in range(inp.lig2_num):
         ndx0 = n_core + n_at1*inp.lig1_num + i*n_at2
         ndx1 = ndx0*1
-        ndx2 = close_ndxs[lig_ndx[1][i]]#np.argsort(cdist([np_xyz[ndx0]], core_xyz))[0,0]
+        ndx2 = close_ndxs[lig_ndx[1][i]] #bond beteen the core's staple and the first bead of the ligand
         bond = [ndx1, ndx2]
         lig2_bonds.append(bond)
         for j in range(n_at2-1):
@@ -96,18 +100,19 @@ def get_lig_angles(np_xyz, lig_ndx, close_ndxs, inp):
     """
     Determines the atom indices of the ligands that are to be involved in angles
     """
-    n_at1, n_at2 = np.sum(inp.lig1_n_per_bead), np.sum(inp.lig2_n_per_bead)
-    n_core = int(len(np_xyz) - inp.lig1_num*n_at1 - inp.lig2_num*n_at2)
+    n_at1, n_at2 = np.sum(inp.lig1_n_per_bead), np.sum(inp.lig2_n_per_bead) #total number of bead in each copy of Ligand 1 and Ligand 2
+    n_core = int(len(np_xyz) - inp.lig1_num*n_at1 - inp.lig2_num*n_at2) #number of beads in the core
     core_xyz = np_xyz[:n_core]
 
     lig1_angles, lig2_angles = [], []
 
+    #Searches for bead triplets bonded inside Ligand 1 (if it is long enough to have angle parameters)
     if n_at1 >= 2:
         for i in range(inp.lig1_num):
             ndx0 = n_core + i*n_at1
             ndx1 = ndx0*1
             ndx2 = ndx1 + 1
-            ndx3 = close_ndxs[lig_ndx[0][i]]#np.argsort(cdist([np_xyz[ndx1]], core_xyz))[0,0]
+            ndx3 = close_ndxs[lig_ndx[0][i]] #angle beteen the core's staple and the first two beads of the ligand
             angle = [ndx3, ndx1, ndx2]
             lig1_angles.append(angle)
             for j in range(1, n_at1-1):
@@ -117,12 +122,13 @@ def get_lig_angles(np_xyz, lig_ndx, close_ndxs, inp):
                 angle = [ndx3, ndx1, ndx2]
                 lig1_angles.append(angle)
 
+    #Searches for bead triplets bonded inside Ligand 2 (if it is long enough to have angle parameters)
     if n_at2 >= 2:
         for i in range(inp.lig2_num):
             ndx0 = n_core + n_at1*inp.lig1_num + i*n_at2
             ndx1 = ndx0*1
             ndx2 = ndx1 + 1
-            ndx3 = close_ndxs[lig_ndx[1][i]]#np.argsort(cdist([np_xyz[ndx1]], core_xyz))[0,0]
+            ndx3 = close_ndxs[lig_ndx[1][i]] #angle beteen the core's staple and the first two beads of the ligand
 
             angle = [ndx3, ndx1, ndx2]
             lig2_angles.append(angle)
@@ -139,19 +145,20 @@ def get_lig_dihedrals(np_xyz, lig_ndx, close_ndxs, inp):
     """
     Determines the atom indices of the ligands that are to be involved in dihedrals
     """
-    n_at1, n_at2 = np.sum(inp.lig1_n_per_bead), np.sum(inp.lig2_n_per_bead)
-    n_core = int(len(np_xyz) - inp.lig1_num*n_at1 - inp.lig2_num*n_at2)
+    n_at1, n_at2 = np.sum(inp.lig1_n_per_bead), np.sum(inp.lig2_n_per_bead) #total number of bead in each copy of Ligand 1 and Ligand 2
+    n_core = int(len(np_xyz) - inp.lig1_num*n_at1 - inp.lig2_num*n_at2) #number of beads in the core
     core_xyz = np_xyz[:n_core]
 
     lig1_dihedrals, lig2_dihedrals = [], []
 
+    #Searches for bead quadruplets bonded inside Ligand 1 (if it is long enough to have dihedral parameters)
     if n_at1 >= 3:
         for i in range(inp.lig1_num):
             ndx0 = n_core + i*n_at1
             ndx1 = ndx0*1
             ndx2 = ndx1 + 1
             ndx3 = ndx1 + 2
-            ndx4 = close_ndxs[lig_ndx[0][i]]#np.argsort(cdist([np_xyz[ndx1]], core_xyz))[0,0]
+            ndx4 = close_ndxs[lig_ndx[0][i]] #dihedral beteen the core's staple and the first three beads of the ligand
             dihedral = [ndx4, ndx1, ndx2, ndx3]
             lig1_dihedrals.append(dihedral)
             for j in range(n_at1-4):
@@ -162,13 +169,14 @@ def get_lig_dihedrals(np_xyz, lig_ndx, close_ndxs, inp):
                 dihedral = [ndx1, ndx2, ndx3, ndx4]
                 lig1_dihedrals.append(dihedral)
 
+    #Searches for bead quadruplets bonded inside Ligand 2 (if it is long enough to have dihedral parameters)
     if n_at2 >= 3:
         for i in range(inp.lig2_num):
             ndx0 = n_core + n_at1*inp.lig1_num + i*n_at2
             ndx1 = ndx0*1
             ndx2 = ndx1 + 1
             ndx3 = ndx1 + 2
-            ndx4 = close_ndxs[lig_ndx[1][i]]#np.argsort(cdist([np_xyz[ndx1]], core_xyz))[0,0]
+            ndx4 = close_ndxs[lig_ndx[1][i]] #dihedral beteen the core's staple and the first three beads of the ligand
             dihedral = [ndx4, ndx1, ndx2, ndx3]
             lig2_dihedrals.append(dihedral)
             for j in range(n_at2-4):

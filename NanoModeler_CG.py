@@ -135,6 +135,7 @@ def NanoModeler_CG(BEAD_RADIUS=None,
     logger.info("Creating temporary folder...")
     TMP = tempfile.mkdtemp(dir="./")
 
+    #This was added by Mattia. Manages the 'logger' which is the output message of NanoModeler
     logger.setLevel(logging.INFO)
     logger.handlers = []
     loggerFileHandler = logging.FileHandler(os.path.join(TMP, "report.log"), "w")
@@ -144,7 +145,7 @@ def NanoModeler_CG(BEAD_RADIUS=None,
     logger.addHandler(loggerFileHandler)
 
     logger.info("Importing parsed variables...")
-    inp = Input(
+    inp = Input( #The Input class is defined in DEPENDENCIES.Extras
     bead_radius=BEAD_RADIUS,
 
     core_radius=CORE_RADIUS,
@@ -179,14 +180,18 @@ def NanoModeler_CG(BEAD_RADIUS=None,
     stripes=STRIPES,
 
     parameter_file=PARAMETER_FILE)
+
+    #Prints parameters parsed by the user
     for key, value in inp.__dict__.items():
         logger.info("\t{:<20}  {:<60}".format(key, str(value)))
 
+    #Dictionary relating the core_method (crystal motif) with the function that makes a block with that lattice
     core_packing_functions = {'primitive': primitive,
     'bcc': bcc,
     'fcc': fcc,
     'hcp': hcp,
     }
+    #Dictionary that relates the core_shape with the function that sculpts the crystal block into that shape
     core_shape_functions = {'sphere': sphere,
     'ellipsoid': ellipsoid,
     'cylinder': cylinder,
@@ -199,53 +204,66 @@ def NanoModeler_CG(BEAD_RADIUS=None,
 
     #######CHECK PARAMETERS######
     logger.info("Checking input parameters...")
-    check_core_dimensions(inp)
-    check_ligand_length(inp)
+    check_core_dimensions(inp) #Checks that the requested NP core is not too big for the server or too smal for the bead radius parsed
+    check_ligand_length(inp) #Checks that the requested NP ligands are not too long for the server
 
     #######CORE#######
+    #Generates 3D points in the specified lattice and big enough to contain the requested NP
     logger.info("Building lattice block...")
     if inp.core_shape != "shell":
         packed_block = core_packing_functions[inp.core_method](inp)
     else:
         packed_block = []
     logger.info("Cropping block into target shape...")
+    #Filters the points in the 3D block to keep only those within the requested core_shape
     core_xyz = core_shape_functions[inp.core_shape](packed_block, inp)
 
+    #Calculates information of the core based on the user's parameters
     logger.info("Describing the cut shape...")
     inp.characterize_core(core_xyz)
 
     if inp.parameter_file != None:
+        #Creates Parameters object containing all the bonded parameters of the itp file parsed
         logger.info("User provided a topology file...")
         logger.info("Importing parameters...")
         params = Parameters(inp.parameter_file)
+        #Checks which parameters are missing given the systems connectivity
         logger.info("Looking for missing parameters...")
         params.check_missing_parameters(inp)
     else:
         params = None
-        warn_txt = "ATTENTION. Parameter file not found. Only writing nanoparticle structure..."
-        logger.warning(warn_txt)
+        logger.warning("ATTENTION. Parameter file not found. Only writing nanoparticle structure...")
 
     #######LIGANDS#######
+    #Selects a number of core surface beads (staples), the vector normal to the core at those beads location and the indices of their first neighbors
     logger.info("Placing ligand anchoring sites...")
     staples_xyz, staples_normals, close_ndxs = place_staples(core_xyz, inp)
     logger.info("Labeling ligands to anchoring sites...")
+    #Assigns staples for Ligand 1 and Ligand 2 depending on the morphology
     lig_ndx = assign_morphology(staples_xyz, inp)
+    #Builds linear ligands and rototranslates them near the stpales and outwards from the core
     logger.info("Growing ligands...")
     lig_xyz = place_ligands(staples_xyz, staples_normals, lig_ndx, inp, params)
+    #Combines coordinates of core and ligands
     logger.info("Merging core with ligands...")
     np_xyz = merge_coordinates(core_xyz, lig_xyz)
+    #Writes gro file
     logger.info("Writing structure file (.gro)...")
     gro_writer(TMP, np_xyz, inp)
 
     #######TOPOLOGY#######
     if inp.parameter_file != None:
+        #Looks for bead id of core beads bound to each other by the elastic network
         logger.info("Assigning bonds within the core...")
         core_bonds = get_core_bonds(core_xyz, inp)
+        #Looks for bead id of ligand beads bound to each other
         logger.info("Assigning bonded interactions within the ligands...")
         lig_bonds, lig_angles, lig_dihedrals = get_lig_bonded_atoms(np_xyz, lig_ndx, close_ndxs, inp)
+        #Writes top file
         logger.info("Writing topology file (.top)...")
         top_writer(TMP, np_xyz, core_bonds, lig_bonds, lig_angles, lig_dihedrals, inp, params)
 
+    #Returns the log of the job in a way that Mattia understands
     loggerFileHandler.flush()
     logger.handlers.remove(loggerFileHandler)
     loggerFileHandler.close()
@@ -256,13 +274,13 @@ def NanoModeler_CG(BEAD_RADIUS=None,
 if __name__ == "__main__":
     NanoModeler_CG(BEAD_RADIUS=0.26,
 
-    CORE_RADIUS=2.5,
+    CORE_RADIUS=None,
     CORE_METHOD="bcc",#"fcc",
     CORE_DENSITY=1.0, #g/cm3 of the material
-    CORE_SHAPE="octahedron",
-    CORE_CYLINDER=[1.5,10.0],#[2.5,4], #Radius and length respectively. Only read if CORE_SHAPE is "cylinder"
+    CORE_SHAPE="rectangular prism",
+    CORE_CYLINDER=[],#[2.5,4], #Radius and length respectively. Only read if CORE_SHAPE is "cylinder"
     CORE_ELLIPSE_AXIS=[],#[1.5,3,4.5], #Only read if CORE_SHAPE is "ellipsoid"
-    CORE_RECT_PRISM=[],#[2,4,6], #Only read if CORE_SHAPE is "rectangular prism"
+    CORE_RECT_PRISM=[5,3,3],#[2,4,6], #Only read if CORE_SHAPE is "rectangular prism"
     CORE_ROD_PARAMS=[],#[2.5, 4], #Caps radius and cylinder length respectively. Only read if CORE_SHAPE is "rod"
     CORE_PYRAMID=[],#[5,5], #Base edge and height respectively. Only read if CORE_SHAPE is "pyramid"
     CORE_OCTAHEDRON_EDGE=6,#6, #Edge size of a regular octahedron. Only read if CORE_SHAPE is "octahedron"
@@ -274,7 +292,7 @@ if __name__ == "__main__":
 
     LIG1_N_PER_BEAD=[8],
     LIG1_BTYPES=['ACD'],
-    LIG1_CHARGES=[0.0],
+    LIG1_CHARGES=[1.2],
     LIG1_MASSES=[10.0],
     LIG1_FRAC=1.0, #1.0,
 

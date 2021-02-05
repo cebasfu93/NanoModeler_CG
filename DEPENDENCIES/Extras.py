@@ -81,13 +81,6 @@ class Input:
         elif core_method == "fcc" or core_method == "hcp":
             self.n_coord = 12
 
-        self.vol = None
-        self.core_bmass = None
-        self.area = None
-        self.n_tot_lig = None
-        self.lig1_num = None
-        self.lig2_num = None
-
     def calculate_area(self):
         """
         Calculates the surface area of the nanoparticle's core given its shape and dimensions
@@ -136,12 +129,12 @@ class Input:
         Characterized the core after it is cut. That is, t determines the characteristic radius, surface area, volume, and number of ligands
         """
         logger.info("\tCharacterizing the core...")
-        self.char_radius = np.max(np.linalg.norm(core_xyz, axis=1))
+        self.char_radius = np.max(np.linalg.norm(core_xyz, axis=1)) #This is the distance from the origin to the farthest core bead. It gives an idea of the size of the NP
         logger.info("\tCalculating volume of the core...")
         self.vol = self.calculate_volume()
         logger.info("\t\tVolume of the core: {:.1f} nm3".format(self.vol))
         logger.info("\tEstimating the core's mass per bead...")
-        self.core_bmass = self.core_density*self.vol*602.214/len(core_xyz) #g nm-3 to u.m.a bead-1
+        self.core_bmass = self.core_density*self.vol*602.214/len(core_xyz) #g nm-3 to u.m.a bead-1. Divides the real mass of the core into the number of core beads
         logger.info("\t\tMass per core bead: {:.3f} u.m.a.".format(self.core_bmass))
         logger.info("\tCalculating surface area of the core...")
         self.area = self.calculate_area()
@@ -151,6 +144,7 @@ class Input:
         logger.info("\t\tTotal number of ligands: {}".format(self.n_tot_lig))
         logger.info("\tCalculating number of ligands 1...")
 
+        #The number of ligands in striped NPs is calculated later. They cannot be calculated solely by the fraction of Ligand 1
         if 'stripe' in self.morph:
             logger.info("This will be calculated later because you chose a striped morphology...")
             self.lig1_num = 0
@@ -184,7 +178,7 @@ class Parameters:
                 bondtypes_section = True
         try:
             bonds = {"{}-{}".format(bond[0], bond[1]) : [int(bond[2]), float(bond[3]), float(bond[4])] for bond in bond_info}
-            bonds2 = {"{}-{}".format(bond[1], bond[0]) : [int(bond[2]), float(bond[3]), float(bond[4])] for bond in bond_info}
+            bonds2 = {"{}-{}".format(bond[1], bond[0]) : [int(bond[2]), float(bond[3]), float(bond[4])] for bond in bond_info} #stores the same bonded parameters for the inverted tuple
             bonds.update(bonds2)
             self.bondtypes = bonds
         except:
@@ -209,10 +203,10 @@ class Parameters:
                 a_key_invert = "{}-{}-{}".format(angle[2], angle[1], angle[0])
                 if a_key in angles.keys():
                     angles[a_key] += [[int(angle[3]), float(angle[4]), float(angle[5])]]
-                    angles2[a_key_invert] += [[int(angle[3]), float(angle[4]), float(angle[5])]]
+                    angles2[a_key_invert] += [[int(angle[3]), float(angle[4]), float(angle[5])]]#stores the same bonded parameters for the inverted tuple
                 else:
                     angles[a_key] = [[int(angle[3]), float(angle[4]), float(angle[5])]]
-                    angles2[a_key_invert] = [[int(angle[3]), float(angle[4]), float(angle[5])]]
+                    angles2[a_key_invert] = [[int(angle[3]), float(angle[4]), float(angle[5])]]#stores the same bonded parameters for the inverted tuple
             angles.update(angles2)
             self.angletypes = angles
         except:
@@ -237,10 +231,10 @@ class Parameters:
                 d_key_invert = "{}-{}-{}-{}".format(dihedral[3], dihedral[2], dihedral[1], dihedral[0])
                 if d_key in dihedrals.keys():
                     dihedrals[d_key] += [[int(dihedral[4]), float(dihedral[5]), float(dihedral[6]), int(dihedral[7])]]
-                    dihedrals2[d_key_invert] += [[int(dihedral[4]), float(dihedral[5]), float(dihedral[6]), int(dihedral[7])]]
+                    dihedrals2[d_key_invert] += [[int(dihedral[4]), float(dihedral[5]), float(dihedral[6]), int(dihedral[7])]] #stores the same bonded parameters for the inverted tuple
                 else:
                     dihedrals[d_key] = [[int(dihedral[4]), float(dihedral[5]), float(dihedral[6]), int(dihedral[7])]]
-                    dihedrals2[d_key_invert] = [[int(dihedral[4]), float(dihedral[5]), float(dihedral[6]), int(dihedral[7])]]
+                    dihedrals2[d_key_invert] = [[int(dihedral[4]), float(dihedral[5]), float(dihedral[6]), int(dihedral[7])]] #stores the same bonded parameters for the inverted tuple
             dihedrals.update(dihedrals2)
             self.dihedraltypes = dihedrals
         except:
@@ -282,7 +276,7 @@ class Parameters:
 
     def check_missing_parameters(self, inp):
         """
-        Determines if there are any missing bonded parameters for considering the size of each ligand and all the possible tuples, triplets, and quadruplets that their bead types form
+        Determines if there are any missing bonded parameters from considering the size of each ligand and all the possible tuples, triplets, and quadruplets that their bead types form
         """
         n_at1 = np.sum(inp.lig1_n_per_bead)
         n_at2 = np.sum(inp.lig2_n_per_bead)
@@ -403,6 +397,9 @@ def rot_mat(u, t):
     return rot
 
 def print_xyz(xyz, fname):
+    """
+    Prints Nx3 array into an .xyz file with name fname
+    """
     f = open(fname, "w")
     f.write("{}\n\n".format(len(xyz)))
     for i, x in enumerate(xyz*10,1):

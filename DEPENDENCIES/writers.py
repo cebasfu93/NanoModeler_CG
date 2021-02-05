@@ -42,11 +42,12 @@ def top_writer(TMP, np_xyz, core_bonds, lig_bonds, lig_angles, lig_dihedrals, in
     """
     Writes a .top file with all the parameters of the final generated structure
     """
-    n_at1 = np.sum(inp.lig1_n_per_bead)
-    n_at2 = np.sum(inp.lig2_n_per_bead)
-    n_core = int(len(np_xyz) - inp.lig1_num*n_at1 - inp.lig2_num*n_at2)
+    n_at1 = np.sum(inp.lig1_n_per_bead) #total number of bead in each copy of Ligand 1
+    n_at2 = np.sum(inp.lig2_n_per_bead) #total number of bead in each copy of Ligand 2
+    n_core = int(len(np_xyz) - inp.lig1_num*n_at1 - inp.lig2_num*n_at2) #number of beads in the core
     btypes = [inp.core_btype]*n_core
     lig1_btypes_list, lig1_charges_list, lig1_masses_list, lig2_btypes_list, lig2_charges_list, lig2_masses_list = [], [], [], [], [], []
+    #Makes lists with all the types, charges, and masses of Ligand 1 and Ligand 2. This make nice iterables to loop later for writing
     for i in range(len(inp.lig1_btypes)):
         lig1_btypes_list += [inp.lig1_btypes[i]]*inp.lig1_n_per_bead[i]
         lig1_charges_list += [inp.lig1_charges[i]]*inp.lig1_n_per_bead[i]
