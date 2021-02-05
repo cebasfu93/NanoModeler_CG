@@ -21,7 +21,10 @@ def get_core_bonds(core_xyz, inp):
                 close_ndxs = np.where(close_dists[i])[0]
                 if len(close_ndxs) == 1:
                     dists_sorted = np.argsort(dists[i])
-                    close_ndxs = dists_sorted[[1,2,3,4,5,6]]
+                    try:
+                        close_ndxs = dists_sorted[[1,2,3,4,5,6]]
+                    except:
+                        logger.error("Something does not look right with your {} ({}) NP. Try making it bigger or making smaller the core bead radius!".format(inp.core_shape, inp.core_method))
                 for ndx2 in close_ndxs:
                     if ndx2 != i and [ndx1, ndx2] not in core_bonds and [ndx2, ndx1] not in core_bonds:
                         core_bonds.append([ndx1, ndx2])
@@ -31,7 +34,10 @@ def get_core_bonds(core_xyz, inp):
             dists_sorted = np.argsort(dists, axis=1)
             for i in range(len(dists)):
                 ndx1 = i*1
-                close_ndxs = dists_sorted[i,[1,2,3,4,5,6,-1]]
+                try:
+                    close_ndxs = dists_sorted[i,[1,2,3,4,5,6,-1]]
+                except:
+                    logger.error("Something does not look right with your shell NP. Try making it bigger or making smaller the core bead radius!")
                 for ndx2 in close_ndxs:
                     if ndx2 != i and [ndx1, ndx2] not in core_bonds and [ndx2, ndx1] not in core_bonds:
                         core_bonds.append([ndx1, ndx2])
