@@ -107,6 +107,10 @@ def NanoModeler_CG(BEAD_RADIUS=None,
     import tempfile
     logger.info("Importing os library...")
     import os
+    logger.info("Importing shutil library...")
+    import shutil
+    logger.info("Importing zipfile library...")
+    import zipfile
     logger.info("Importing numpy library...")
     import numpy as np
     logger.info("Importing scipy.spatial.distance library...")
@@ -268,8 +272,25 @@ def NanoModeler_CG(BEAD_RADIUS=None,
     logger.handlers.remove(loggerFileHandler)
     loggerFileHandler.close()
 
-    return 1
+    #Compresses output
+    logger.info("Grouping output files...")
+    zip_path = TMP + ".zip"
+    zip_tmp = zipfile.ZipFile(zip_path, "w")
+    for i in os.listdir(TMP):
+        zip_tmp.write("{}/{}".format(TMP, i),"result/{}".format(i))       #Saves all the files produced into the zip file
+    zip_tmp.close()
+    zf = open(zip_path, 'rb')       #Opens and reads the saved zip file
+    zip_data = zf.read()
+    zf.close()
 
+    #Delete the temporary folder
+    logger.info("Cleaning...")
+    shutil.rmtree(TMP)
+
+    logger.info("\"Señoras y señores, bienvenidos al party, agarren a su pareja (de la cintura) y preparense porque lo que viene no esta facil, no esta facil no.\"\n\tIvy Queen.")
+    logger.info("NanoModeler terminated normally. Que gracias.")
+
+    return (1, zip_data)
 
 if __name__ == "__main__":
     NanoModeler_CG(BEAD_RADIUS=0.26,
@@ -277,22 +298,22 @@ if __name__ == "__main__":
     CORE_RADIUS=None,
     CORE_METHOD="bcc",#"fcc",
     CORE_DENSITY=1.0, #g/cm3 of the material
-    CORE_SHAPE="rectangular prism",
-    CORE_CYLINDER=[],#[2.5,4], #Radius and length respectively. Only read if CORE_SHAPE is "cylinder"
+    CORE_SHAPE="cylinder",
+    CORE_CYLINDER=[2.5,5],#[2.5,4], #Radius and length respectively. Only read if CORE_SHAPE is "cylinder"
     CORE_ELLIPSE_AXIS=[],#[1.5,3,4.5], #Only read if CORE_SHAPE is "ellipsoid"
-    CORE_RECT_PRISM=[5,3,3],#[2,4,6], #Only read if CORE_SHAPE is "rectangular prism"
+    CORE_RECT_PRISM=[],#[2,4,6], #Only read if CORE_SHAPE is "rectangular prism"
     CORE_ROD_PARAMS=[],#[2.5, 4], #Caps radius and cylinder length respectively. Only read if CORE_SHAPE is "rod"
     CORE_PYRAMID=[],#[5,5], #Base edge and height respectively. Only read if CORE_SHAPE is "pyramid"
-    CORE_OCTAHEDRON_EDGE=6,#6, #Edge size of a regular octahedron. Only read if CORE_SHAPE is "octahedron"
+    CORE_OCTAHEDRON_EDGE=None,#6, #Edge size of a regular octahedron. Only read if CORE_SHAPE is "octahedron"
     CORE_BTYPE="AC",
     CORE_EN=True,
     CORE_EN_K=1.0,
 
-    GRAFT_DENSITY=0.15, #0.152, #0.216nm2 thiol-1
+    GRAFT_DENSITY=1.0, #0.152, #0.216nm2 thiol-1
 
-    LIG1_N_PER_BEAD=[8],
+    LIG1_N_PER_BEAD=[19],
     LIG1_BTYPES=['ACD'],
-    LIG1_CHARGES=[1.2],
+    LIG1_CHARGES=[100],
     LIG1_MASSES=[10.0],
     LIG1_FRAC=1.0, #1.0,
 
@@ -301,7 +322,7 @@ if __name__ == "__main__":
     LIG2_CHARGES=[],#[0,0],
     LIG2_MASSES=[],#[44, 31],
 
-    MORPHOLOGY='homogeneous',#random, janus_x, janus_y, janus_z, stripe_x, stripe_y, stripe_z
+    MORPHOLOGY=None,#random, janus_x, janus_y, janus_z, stripe_x, stripe_y, stripe_z
     RSEED=None, #1,# None
     STRIPES=None,
 
