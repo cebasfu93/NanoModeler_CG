@@ -1,3 +1,4 @@
+; comments are with semicolorn
 [ bondtypes ]
 ; i   j   func    b0    kb
   C1  C1    1    0.52   5000
@@ -9,3 +10,4 @@
   C1  C1  Qda   1     180   25
   C1  C1  C1    1     180   25
   C1  Qda Qda   1     180   25
+
