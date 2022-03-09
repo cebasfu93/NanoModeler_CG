@@ -89,8 +89,9 @@ def top_writer(TMP, np_xyz, core_bonds, lig_bonds, lig_angles, lig_dihedrals, in
             f.write("{:>6d} {:>4} {:>5} {:>5} {:>5} {:>5} {:>12.6f}    {:>9.5f} ; qtot {:>6.3f}\n".format(at, btype, res, "LIG2", "B{}".format(j), at, charge, mass, q_tot))
 
     logger.info("Total charge of the system: {:.3f} e...".format(q_tot))
-    if q_tot%int(q_tot) != 0.0:
-        logger.warning("Beware, the total charge of the system is non-integer!")
+    if q_tot != 0:
+        if q_tot%int(q_tot) != 0.0:
+            logger.warning("Beware, the total charge of the system is non-integer!")
     logger.info("\tWriting [ bonds ]...")
     f.write("\n[ bonds ]\n")
     f.write(";  ai    aj funct           c0           c1\n")
