@@ -25,11 +25,11 @@ class Input:
         self.core_method = core_method
         self.core_density = core_density
         self.core_shape = core_shape
-        self.core_cylinder = np.array(core_cylinder)
-        self.core_ellipse_axis = np.array(core_ellipse_axis)
-        self.core_rect_prism = np.array(core_rect_prism)
-        self.core_rod_params = np.array(core_rod_params)
-        self.core_pyramid = np.array(core_pyramid)
+        self.core_cylinder = core_cylinder
+        self.core_ellipse_axis = core_ellipse_axis
+        self.core_rect_prism = core_rect_prism
+        self.core_rod_params = core_rod_params
+        self.core_pyramid = core_pyramid
         self.core_octahedron = core_octahedron
         self.core_btype = core_btype
         self.core_en = core_en
@@ -37,21 +37,19 @@ class Input:
 
         self.graft_density = graft_density
 
-        self.lig1_n_per_bead = np.array(lig1_n_per_bead)
-        self.lig1_btypes = np.array(lig1_btypes)
-        self.lig1_charges =np.array (lig1_charges)
-        self.lig1_masses = np.array(lig1_masses)
+        self.lig1_n_per_bead = lig1_n_per_bead
+        self.lig1_btypes = lig1_btypes
+        self.lig1_charges = lig1_charges
+        self.lig1_masses = lig1_masses
         self.lig1_frac = lig1_frac
 
-        self.lig2_n_per_bead = np.array(lig2_n_per_bead)
-        self.lig2_btypes = np.array(lig2_btypes)
-        self.lig2_charges = np.array(lig2_charges)
-        self.lig2_masses = np.array(lig2_masses)
-        if self.lig1_frac == 1.0 or self.lig1_frac == 0.0:
+        self.lig2_n_per_bead = lig2_n_per_bead
+        self.lig2_btypes = lig2_btypes
+        self.lig2_charges = lig2_charges
+        self.lig2_masses = lig2_masses
+
+        if self.lig1_frac == None or self.lig1_frac == 1.0 or self.lig1_frac == 0.0:
             self.morph = "homogeneous"
-        elif self.lig1_frac == None and morph == None:
-            self.morph = "homogeneous"
-            self.lig1_frac = 1.0
         else:
             self.morph = morph
         self.rsd = rsd
@@ -72,7 +70,7 @@ class Input:
         elif self.core_shape == "pyramid":
             self.char_radius = np.max([np.sqrt(2)*self.core_pyramid[0]/2, self.core_pyramid[1]/2])
         elif self.core_shape == "octahedron":
-            self.char_radius = self.core_octahedron/2
+            self.char_radius = np.sqrt(2)*self.core_octahedron/2
 
         if core_method == "primitive":
             self.n_coord = 6
@@ -80,6 +78,34 @@ class Input:
             self.n_coord = 8
         elif core_method == "fcc" or core_method == "hcp":
             self.n_coord = 12
+
+        self.vol = None
+        self.core_bmass = None
+        self.area = None
+        self.n_tot_lig = None
+        self.lig1_num = None
+        self.lig2_num = None
+
+    def characterize_nominal_values(self):
+        """
+        Validates that the Input object has sensible attributes.
+        """
+        logger.info("Validating input...")
+        logger.info("\tCalculating volume of the core...")
+        self.vol = self.calculate_volume()
+        logger.info("\t\tVolume of the core: {:.1f} nm3".format(self.vol))
+        logger.info("\tCalculating surface area of the core...")
+        self.area = self.calculate_area()
+        logger.info("\t\tSuperficial area of the core: {:.2f} nm2".format(self.area))
+        logger.info("\tCalculating total number of ligands...")
+        self.n_tot_lig = int(self.area/self.graft_density)
+        logger.info("\t\tTotal number of ligands: {}".format(self.n_tot_lig))
+        logger.info("\tCalculating number of ligands 1...")
+        self.lig1_num = int(self.n_tot_lig * self.lig1_frac)
+        logger.info("\t\tNumber of ligands 1: {}".format(self.lig1_num))
+        logger.info("\tCalculating number of ligands 2...")
+        self.lig2_num = self.n_tot_lig - self.lig1_num
+        logger.info("\t\tNumber of ligands 2: {}".format(self.lig2_num))
 
     def calculate_area(self):
         """
@@ -129,32 +155,11 @@ class Input:
         Characterized the core after it is cut. That is, t determines the characteristic radius, surface area, volume, and number of ligands
         """
         logger.info("\tCharacterizing the core...")
-        self.char_radius = np.max(np.linalg.norm(core_xyz, axis=1)) #This is the distance from the origin to the farthest core bead. It gives an idea of the size of the NP
-        logger.info("\tCalculating volume of the core...")
-        self.vol = self.calculate_volume()
-        logger.info("\t\tVolume of the core: {:.1f} nm3".format(self.vol))
+        self.char_radius = np.max(np.linalg.norm(core_xyz, axis=1))
         logger.info("\tEstimating the core's mass per bead...")
-        self.core_bmass = self.core_density*self.vol*602.214/len(core_xyz) #g nm-3 to u.m.a bead-1. Divides the real mass of the core into the number of core beads
-        logger.info("\t\tMass per core bead: {:.3f} u.m.a.".format(self.core_bmass))
-        logger.info("\tCalculating surface area of the core...")
-        self.area = self.calculate_area()
-        logger.info("\t\tSuperficial area of the core: {:.2f} nm2".format(self.area))
-        logger.info("\tCalculating total number of ligands...")
-        self.n_tot_lig = int(self.area/self.graft_density)
-        logger.info("\t\tTotal number of ligands: {}".format(self.n_tot_lig))
-        logger.info("\tCalculating number of ligands 1...")
+        self.core_bmass = self.core_density*self.vol*602.214/len(core_xyz) #g nm-3 to a.m.u. bead-1
+        logger.info("\t\tMass per core bead: {:.3f} a.m.u..".format(self.core_bmass))
 
-        #The number of ligands in striped NPs is calculated later. They cannot be calculated solely by the fraction of Ligand 1
-        if 'stripe' in self.morph:
-            logger.info("This will be calculated later because you chose a striped morphology...")
-            self.lig1_num = 0
-            self.lig2_num = 0
-        else:
-            self.lig1_num = int(self.n_tot_lig * self.lig1_frac)
-            logger.info("\t\tNumber of ligands 1: {}".format(self.lig1_num))
-            logger.info("\tCalculating number of ligands 2...")
-            self.lig2_num = self.n_tot_lig - self.lig1_num
-            logger.info("\t\tNumber of ligands 2: {}".format(self.lig2_num))
 
 class Parameters:
     """
@@ -170,20 +175,16 @@ class Parameters:
         bond_info = []
         for line in fl:
             if bondtypes_section == True:
-                if ("[" in line) and ("]" in line):
+                if ("[ " in line) and (" ]" in line):
                     break
-                if ";"!=line[0] and line.strip():
+                if ";"!=line[0] and line!="\n":
                     bond_info.append(line.split())
-            if "[bondtypes]" in line.replace(" ", ""):
+            if "[ bondtypes ]" in line:
                 bondtypes_section = True
-        try:
-            bonds = {"{}-{}".format(bond[0], bond[1]) : [int(bond[2]), float(bond[3]), float(bond[4])] for bond in bond_info}
-            bonds2 = {"{}-{}".format(bond[1], bond[0]) : [int(bond[2]), float(bond[3]), float(bond[4])] for bond in bond_info} #stores the same bonded parameters for the inverted tuple
-            bonds.update(bonds2)
-            self.bondtypes = bonds
-        except:
-            logger.error("Could not read bondtypes section. Bond parameters should follow the format 'BeadType BeadType Function Length ForceConstant'!")
-            self.bondtypes = {}
+        bonds = {"{}-{}".format(bond[0], bond[1]) : [int(bond[2]), float(bond[3]), float(bond[4])] for bond in bond_info}
+        bonds2 = {"{}-{}".format(bond[1], bond[0]) : [int(bond[2]), float(bond[3]), float(bond[4])] for bond in bond_info}
+        bonds.update(bonds2)
+        self.bondtypes = bonds
 
         angletypes_section = False
         angle_info = []
@@ -191,27 +192,23 @@ class Parameters:
         angles2 = {}
         for line in fl:
             if angletypes_section == True:
-                if ("[" in line) and ("]" in line):
+                if ("[ " in line) and (" ]" in line):
                     break
-                if ";"!=line[0] and line.strip():
+                if ";"!=line[0] and line!="\n":
                     angle_info.append(line.split())
-            if "[angletypes]" in line.replace(" ", ""):
+            if "[ angletypes ]" in line:
                 angletypes_section = True
-        try:
-            for angle in angle_info:
-                a_key = "{}-{}-{}".format(angle[0], angle[1], angle[2])
-                a_key_invert = "{}-{}-{}".format(angle[2], angle[1], angle[0])
-                if a_key in angles.keys():
-                    angles[a_key] += [[int(angle[3]), float(angle[4]), float(angle[5])]]
-                    angles2[a_key_invert] += [[int(angle[3]), float(angle[4]), float(angle[5])]]#stores the same bonded parameters for the inverted tuple
-                else:
-                    angles[a_key] = [[int(angle[3]), float(angle[4]), float(angle[5])]]
-                    angles2[a_key_invert] = [[int(angle[3]), float(angle[4]), float(angle[5])]]#stores the same bonded parameters for the inverted tuple
-            angles.update(angles2)
-            self.angletypes = angles
-        except:
-            logger.error("Could not read angletypes section. Angle parameters should follow the format 'BeadType BeadType BeadType Function Angle ForceConstant'!")
-            self.angletypes = {}
+        for angle in angle_info:
+            a_key = "{}-{}-{}".format(angle[0], angle[1], angle[2])
+            a_key_invert = "{}-{}-{}".format(angle[2], angle[1], angle[0])
+            if a_key in angles.keys():
+                angles[a_key] += [[int(angle[3]), float(angle[4]), float(angle[5])]]
+                angles2[a_key_invert] += [[int(angle[3]), float(angle[4]), float(angle[5])]]
+            else:
+                angles[a_key] = [[int(angle[3]), float(angle[4]), float(angle[5])]]
+                angles2[a_key_invert] = [[int(angle[3]), float(angle[4]), float(angle[5])]]
+        angles.update(angles2)
+        self.angletypes = angles
 
         dihedraltypes_section = False
         dihedral_info = []
@@ -219,27 +216,23 @@ class Parameters:
         dihedrals2 = {}
         for line in fl:
             if dihedraltypes_section == True:
-                if ("[" in line) and ("]" in line):
+                if ("[ " in line) and (" ]" in line):
                     break
-                if ";"!=line[0] and line.strip():
+                if ";"!=line[0] and line!="\n":
                     dihedral_info.append(line.split())
-            if "[dihedraltypes]" in line.replace(" ", ""):
+            if "[ dihedraltypes ]" in line:
                 dihedraltypes_section = True
-        try:
-            for dihedral in dihedral_info:
-                d_key = "{}-{}-{}-{}".format(dihedral[0], dihedral[1], dihedral[2], dihedral[3])
-                d_key_invert = "{}-{}-{}-{}".format(dihedral[3], dihedral[2], dihedral[1], dihedral[0])
-                if d_key in dihedrals.keys():
-                    dihedrals[d_key] += [[int(dihedral[4]), float(dihedral[5]), float(dihedral[6]), int(dihedral[7])]]
-                    dihedrals2[d_key_invert] += [[int(dihedral[4]), float(dihedral[5]), float(dihedral[6]), int(dihedral[7])]] #stores the same bonded parameters for the inverted tuple
-                else:
-                    dihedrals[d_key] = [[int(dihedral[4]), float(dihedral[5]), float(dihedral[6]), int(dihedral[7])]]
-                    dihedrals2[d_key_invert] = [[int(dihedral[4]), float(dihedral[5]), float(dihedral[6]), int(dihedral[7])]] #stores the same bonded parameters for the inverted tuple
-            dihedrals.update(dihedrals2)
-            self.dihedraltypes = dihedrals
-        except:
-            logger.error("Could not read dihedraltypes section. Dihedral parameters should follow the format 'BeadType BeadType BeadType Function Angle ForceConstant Multiplicity'!")
-            self.dihedraltypes = {}
+        for dihedral in dihedral_info:
+            d_key = "{}-{}-{}-{}".format(dihedral[0], dihedral[1], dihedral[2], dihedral[3])
+            d_key_invert = "{}-{}-{}-{}".format(dihedral[3], dihedral[2], dihedral[1], dihedral[0])
+            if d_key in dihedrals.keys():
+                dihedrals[d_key] += [[int(dihedral[4]), float(dihedral[5]), float(dihedral[6]), int(dihedral[7])]]
+                dihedrals2[d_key_invert] += [[int(dihedral[4]), float(dihedral[5]), float(dihedral[6]), int(dihedral[7])]]
+            else:
+                dihedrals[d_key] = [[int(dihedral[4]), float(dihedral[5]), float(dihedral[6]), int(dihedral[7])]]
+                dihedrals2[d_key_invert] = [[int(dihedral[4]), float(dihedral[5]), float(dihedral[6]), int(dihedral[7])]]
+        dihedrals.update(dihedrals2)
+        self.dihedraltypes = dihedrals
 
     def check_bond_parameters(self, inp, lig1or2):
         """
@@ -250,7 +243,8 @@ class Parameters:
         if np.any(np.invert(bond_checks)):
             no_params_ndx = np.where(np.invert(bond_checks))[0]
             missing_pairs = ["{}-{}".format(lig_btypes[ndx], lig_btypes[ndx+1]) for ndx in no_params_ndx]
-            logger.warning("ATTENTION. Missing parameters for bonds: {}".format(np.unique(missing_pairs)))
+            warn_txt = "ATTENTION. Missing parameters for bonds: {}".format(np.unique(missing_pairs))
+            logger.warning(warn_txt)
 
     def check_angle_parameters(self, inp, lig1or2):
         """
@@ -261,7 +255,8 @@ class Parameters:
         if np.any(np.invert(angle_checks)):
             no_params_ndx = np.where(np.invert(angle_checks))[0]
             missing_pairs = ["{}-{}-{}".format(lig_btypes[ndx], lig_btypes[ndx+1], lig_btypes[ndx+2]) for ndx in no_params_ndx]
-            logger.warning("ATTENTION. Missing parameters for angles: {}".format(np.unique(missing_pairs)))
+            warn_txt = "ATTENTION. Missing parameters for angles: {}".format(np.unique(missing_pairs))
+            logger.warning(warn_txt)
 
     def check_dihedral_parameters(self, inp, lig1or2):
         """
@@ -272,11 +267,12 @@ class Parameters:
         if np.any(np.invert(dihedral_checks)):
             no_params_ndx = np.where(np.invert(dihedral_checks))[0]
             missing_pairs = ["{}-{}-{}-{}".format(lig_btypes[ndx], lig_btypes[ndx+1], lig_btypes[ndx+2], lig_btypes[ndx+3]) for ndx in no_params_ndx]
-            logger.warning("ATTENTION. Missing parameters for dihedral: {}".format(np.unique(missing_pairs)))
+            warn_txt = "ATTENTION. Missing parameters for dihedral: {}".format(np.unique(missing_pairs))
+            logger.warning(warn_txt)
 
     def check_missing_parameters(self, inp):
         """
-        Determines if there are any missing bonded parameters from considering the size of each ligand and all the possible tuples, triplets, and quadruplets that their bead types form
+        Determines if there are any missing bonded parameters for considering the size of each ligand and all the possible tuples, triplets, and quadruplets that their bead types form
         """
         n_at1 = np.sum(inp.lig1_n_per_bead)
         n_at2 = np.sum(inp.lig2_n_per_bead)
@@ -305,11 +301,11 @@ def build_lig_btypes_list_n(inp, lig1or2):
     Builds list with all the bead types (with repetition) present in a given ligand
     """
     if lig1or2 == "1":
-        lig_btypes = inp.lig1_btypes
-        lig_n_per_bead = inp.lig1_n_per_bead
+        lig_btypes = inp.lig1_btypes*1
+        lig_n_per_bead = inp.lig1_n_per_bead*1
     elif lig1or2 == "2":
-        lig_btypes = inp.lig2_btypes
-        lig_n_per_bead = inp.lig2_n_per_bead
+        lig_btypes = inp.lig2_btypes*1
+        lig_n_per_bead = inp.lig2_n_per_bead*1
     lig_btypes_list = [inp.core_btype]
     for i in range(len(lig_btypes)):
         lig_btypes_list += [lig_btypes[i]]*lig_n_per_bead[i]
@@ -397,9 +393,6 @@ def rot_mat(u, t):
     return rot
 
 def print_xyz(xyz, fname):
-    """
-    Prints Nx3 array into an .xyz file with name fname
-    """
     f = open(fname, "w")
     f.write("{}\n\n".format(len(xyz)))
     for i, x in enumerate(xyz*10,1):

@@ -1,0 +1,8 @@
+[ bondtypes ]
+; i j   funct   length  force.c. Params as octadecane
+  C5  C1        1       0.470   1250
+  C1  C1        1       0.470   1250
+
+[ angletypes ]
+; i j k         funct   angle   force.c.
+  C1  C1  C1      2      180   25

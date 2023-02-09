@@ -80,6 +80,22 @@ def ThomsonMC(n, mcs, sigma):
         MC(positions, sigma)
         energy.append(potential_energy(positions))
 
+
+    # plot_configuration(positions, charge_center=True, show=False, out="new.pdf")
+
+    #print(numpy.mean(positions, axis=0))
+    #print(potential_energy(positions), sigma)
+
+    """pyplot.figure()
+    pyplot.plot(range(1, mcs + 1), energy, "-r")
+    pyplot.grid()
+    pyplot.xlabel(r"$time \ \rm [MCS]$", fontsize=20)
+    pyplot.ylabel(r"$U \ \rm [adim.]$", fontsize=20)
+    pyplot.title(r"$\sigma = %s$" % sigma)
+    pyplot.tight_layout()
+    pyplot.savefig("energy_vs_time.pdf")
+    pyplot.close()"""
+
     minimum = {}
     for i, p1 in enumerate(positions):
         dists = []
@@ -87,6 +103,7 @@ def ThomsonMC(n, mcs, sigma):
             if (i != j):
                 dists.append(numpy.linalg.norm(p1 - p2))
         minimum[i] = min(dists)
+
 
     epsilon = 1e-2
     lines = []
@@ -98,6 +115,21 @@ def ThomsonMC(n, mcs, sigma):
                 if dist <= (1.4 * min_dist):
                     lines.append((i, j))
 
+    """x, y, z = positions.T
+    fig = pyplot.figure()
+    ax = fig.add_subplot(111, projection="3d")
+    ax.scatter(x, y, z, color="crimson", s=20)
+    for i, j in lines:
+        xl = positions[i][0], positions[j][0]
+        yl = positions[i][1], positions[j][1]
+        zl = positions[i][2], positions[j][2]
+        ax.plot(xl, yl, zl, "-k")
+    ax.set_xlim(-1, 1)
+    ax.set_ylim(-1, 1)
+    ax.set_zlim(-1, 1)
+    #ax.set_aspect("equal")
+    pyplot.show()
+    pyplot.close()"""
     return positions
 
 

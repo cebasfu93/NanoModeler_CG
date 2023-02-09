@@ -17,6 +17,7 @@ def primitive(inp):
     triplets = np.array(list(itertools.product(cells_range, repeat=3)))
     xyz = triplets*const
     xyz = center(xyz)
+    #print_xyz(xyz, "core.xyz")
     return xyz
 
 def bcc(inp):
@@ -38,6 +39,7 @@ def bcc(inp):
 
     xyz = np.array(xyz)*const/2
     xyz = center(xyz)
+    #print_xyz(xyz, "bcc.xyz")
     return xyz
 
 def fcc(inp):
@@ -60,6 +62,7 @@ def fcc(inp):
 
     xyz = np.array(xyz)*const/2
     xyz = center(xyz)
+    #print_xyz(xyz, "fcc.xyz")
     return xyz
 
 def hcp(inp):
@@ -76,7 +79,7 @@ def hcp(inp):
             for k in range(cells_per_side):
                 xyz = np.append(xyz, [2*i+(j+k)%2, np.sqrt(3)*(j+k%2/3), 2*np.sqrt(6)/3*k])
 
-    #These loops fix the edges of the hcp cube
+    #The following loops fix the edges of the hcp cube
     i = cells_per_side
     for j in range(cells_per_side//2+1):
         for k in range(cells_per_side//2+1):

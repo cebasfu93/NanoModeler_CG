@@ -1,9 +1,11 @@
 import logging
+import shutil
+import zipfile
 
 logger = logging.getLogger('nanomodelercg')
 logger.addHandler(logging.NullHandler())
 
-__VERSION__ = "1.0.0"
+__VERSION__ = "1.0.13"
 
 def getVersion():
     return __VERSION__
@@ -81,7 +83,7 @@ def NanoModeler_CG(BEAD_RADIUS=None,
     LIG1_CHARGES: list of float
         Partial charges (e) assigned to each bead type present in ligand 1
     LIG1_MASSES: list of float
-        Mass (u.m.a) assigned to each bead type present in ligand 1
+        Mass (a.m.u.) assigned to each bead type present in ligand 1
     LIG1_FRAC: float
         Value between 0 and 1 representing the fraction of total ligands that should be assigned to ligand 1
     LIG2_N_PER_BEAD: list of int
@@ -91,7 +93,7 @@ def NanoModeler_CG(BEAD_RADIUS=None,
     LIG2_CHARGES: list of float
         Partial charges (e) assigned to each bead type present in ligand 2
     LIG2_MASSES: list of float
-        Mass (u.m.a) assigned to each bead type present in ligand 2
+        Mass (a.m.u.) assigned to each bead type present in ligand 2
     MORPHOLOGY: str
         Arrangement on which to place the ligands. homogeneous, random, janus_x, janus_y, janus_z, stripe_x, stripe_y, stripe_z
     RSEED: int
@@ -107,30 +109,29 @@ def NanoModeler_CG(BEAD_RADIUS=None,
     import tempfile
     logger.info("Importing os library...")
     import os
-    logger.info("Importing shutil library...")
-    import shutil
-    logger.info("Importing zipfile library...")
-    import zipfile
     logger.info("Importing numpy library...")
     import numpy as np
     logger.info("Importing scipy.spatial.distance library...")
-    from  scipy.spatial.distance import cdist
+    from scipy.spatial.distance import cdist
     logger.info("Importing sklearn.decomposition library...")
-    from  sklearn import decomposition
+    from sklearn import decomposition
     logger.info("Importing scipy.optimize library...")
     from scipy.optimize import minimize
     logger.info("Importing transformations library...")
     import DEPENDENCIES.transformations
     logger.info("Importing private classes...")
-    from DEPENDENCIES.Extras import Input, Parameters, center, cartesian_to_polar, polar_to_cartesian, sunflower_pts, merge_coordinates
+    from DEPENDENCIES.Extras import (Input, Parameters, cartesian_to_polar,
+                                     center, merge_coordinates,
+                                     polar_to_cartesian, sunflower_pts)
     logger.info("Importing lattice generators...")
-    from DEPENDENCIES.spatial_distributions import primitive, bcc, fcc, hcp
+    from DEPENDENCIES.spatial_distributions import bcc, fcc, hcp, primitive
     logger.info("Importing shape cutters...")
-    from DEPENDENCIES.core_maker import sphere, ellipsoid, cylinder, rectangular_prism, rod, pyramid, octahedron, shell
-    logger.info("Importing shape checker...")
-    from DEPENDENCIES.check import check_core_dimensions, check_ligand_length
+    from DEPENDENCIES.core_maker import (cylinder, ellipsoid, octahedron,
+                                         pyramid, rectangular_prism, rod,
+                                         shell, sphere)
     logger.info("Importing coating functions...")
-    from DEPENDENCIES.coat_maker import place_staples, assign_morphology, place_ligands
+    from DEPENDENCIES.coat_maker import (assign_morphology, place_ligands,
+                                         place_staples)
     logger.info("Importing topology builder...")
     from DEPENDENCIES.top_maker import get_core_bonds, get_lig_bonded_atoms
     logger.info("Importing writers...")
@@ -139,7 +140,6 @@ def NanoModeler_CG(BEAD_RADIUS=None,
     logger.info("Creating temporary folder...")
     TMP = tempfile.mkdtemp(dir="./")
 
-    #This was added by Mattia. Manages the 'logger' which is the output message of NanoModeler
     logger.setLevel(logging.INFO)
     logger.handlers = []
     loggerFileHandler = logging.FileHandler(os.path.join(TMP, "report.log"), "w")
@@ -149,7 +149,7 @@ def NanoModeler_CG(BEAD_RADIUS=None,
     logger.addHandler(loggerFileHandler)
 
     logger.info("Importing parsed variables...")
-    inp = Input( #The Input class is defined in DEPENDENCIES.Extras
+    inp = Input(
     bead_radius=BEAD_RADIUS,
 
     core_radius=CORE_RADIUS,
@@ -184,18 +184,21 @@ def NanoModeler_CG(BEAD_RADIUS=None,
     stripes=STRIPES,
 
     parameter_file=PARAMETER_FILE)
-
-    #Prints parameters parsed by the user
     for key, value in inp.__dict__.items():
         logger.info("\t{:<20}  {:<60}".format(key, str(value)))
-
-    #Dictionary relating the core_method (crystal motif) with the function that makes a block with that lattice
-    core_packing_functions = {'primitive': primitive,
+    inp.characterize_nominal_values()
+    packing_efficiency = {
+    'primitive': 0.52,
+    'bcc': 0.68,
+    'fcc': 0.74,
+    'hcp': 0.74,
+    }
+    core_packing_functions = {
+    'primitive': primitive,
     'bcc': bcc,
     'fcc': fcc,
     'hcp': hcp,
     }
-    #Dictionary that relates the core_shape with the function that sculpts the crystal block into that shape
     core_shape_functions = {'sphere': sphere,
     'ellipsoid': ellipsoid,
     'cylinder': cylinder,
@@ -205,125 +208,166 @@ def NanoModeler_CG(BEAD_RADIUS=None,
     'octahedron' : octahedron,
     'shell': shell
     }
-
-    #######CHECK PARAMETERS######
-    logger.info("Checking input parameters...")
-    check_core_dimensions(inp) #Checks that the requested NP core is not too big for the server or too smal for the bead radius parsed
-    check_ligand_length(inp) #Checks that the requested NP ligands are not too long for the server
+    # CHECK THAT THE NANOPARTICLE IS WITHIN A REASONABLE SIZE
+    logger.info("\tValidating size of the final nanoparticle...")
+    if inp.core_shape == 'shell':
+        n_estimate_block_beads = 4 * inp.core_radius ** 2 / (inp.bead_radius ** 2)
+        logger.info("\t\tEstimate number of beads in the shell: {}".format(n_estimate_block_beads))
+    else:
+        n_estimate_block_beads = ((packing_efficiency[inp.core_method] * 2 * inp.char_radius) ** 3) / (4 * np.pi * inp.bead_radius ** 3 / 3)
+        logger.info("\t\tEstimate number of beads in the sculpting block: {}".format(n_estimate_block_beads))
+    
+    n_max_core_beads = 8E5
+    if n_estimate_block_beads > n_max_core_beads:
+        raise ValueError(f"The core requested would require a sculpting block of ca. {n_estimate_block_beads:.0f}, "
+                         f"but the maximum allowed is {n_max_core_beads:.0f}. Consider reducing the core size or increasing the bead radius.")
+    n_estimate_ligand_1_beads = np.sum(inp.lig1_n_per_bead) * inp.lig1_num
+    logger.info("\t\tEstimate number of beads in ligand 1: {:.0f}".format(n_estimate_ligand_1_beads))
+    n_estimate_ligand_2_beads = np.sum(inp.lig2_n_per_bead) * inp.lig2_num
+    logger.info("\t\tEstimate number of beads in ligand 2: {:.0f}".format(n_estimate_ligand_2_beads))
+    n_estimate_ligands_beads = n_estimate_ligand_1_beads + n_estimate_ligand_2_beads
+    n_max_ligands_beads = 1E6
+    if n_estimate_ligands_beads > n_max_ligands_beads:
+        raise ValueError(f"The ligands requested would require {n_estimate_ligands_beads:.0f} beads, but the maximum allowed is {n_max_ligands_beads:.0f}. "
+                         f"Consider reducing the grafting density or the number of beads per ligand.")
 
     #######CORE#######
-    #Generates 3D points in the specified lattice and big enough to contain the requested NP
     logger.info("Building lattice block...")
     if inp.core_shape != "shell":
         packed_block = core_packing_functions[inp.core_method](inp)
     else:
         packed_block = []
     logger.info("Cropping block into target shape...")
-    #Filters the points in the 3D block to keep only those within the requested core_shape
     core_xyz = core_shape_functions[inp.core_shape](packed_block, inp)
 
-    #Calculates information of the core based on the user's parameters
     logger.info("Describing the cut shape...")
     inp.characterize_core(core_xyz)
+    if inp.char_radius <= 2 * inp.bead_radius:
+        error_msg = f"Cannot build core of size {inp.char_radius:.3f} nm given a bead radius of {inp.bead_radius:.3f} nm. " \
+                    "Considering making a bigger nanoparticle or using bigger beads. Exiting."
+        logger.error(error_msg)
+        raise ValueError(error_msg)
 
     if inp.parameter_file != None:
-        #Creates Parameters object containing all the bonded parameters of the itp file parsed
         logger.info("User provided a topology file...")
         logger.info("Importing parameters...")
         params = Parameters(inp.parameter_file)
-        #Checks which parameters are missing given the systems connectivity
         logger.info("Looking for missing parameters...")
         params.check_missing_parameters(inp)
     else:
         params = None
-        logger.warning("ATTENTION. Parameter file not found. Only writing nanoparticle structure...")
+        warn_txt = "ATTENTION. Parameter file not found. Only writing nanoparticle structure..."
+        logger.warning(warn_txt)
 
     #######LIGANDS#######
-    #Selects a number of core surface beads (staples), the vector normal to the core at those beads location and the indices of their first neighbors
     logger.info("Placing ligand anchoring sites...")
     staples_xyz, staples_normals, close_ndxs = place_staples(core_xyz, inp)
     logger.info("Labeling ligands to anchoring sites...")
-    #Assigns staples for Ligand 1 and Ligand 2 depending on the morphology
     lig_ndx = assign_morphology(staples_xyz, inp)
-    #Builds linear ligands and rototranslates them near the stpales and outwards from the core
     logger.info("Growing ligands...")
     lig_xyz = place_ligands(staples_xyz, staples_normals, lig_ndx, inp, params)
-    #Combines coordinates of core and ligands
     logger.info("Merging core with ligands...")
     np_xyz = merge_coordinates(core_xyz, lig_xyz)
-    #Writes gro file
     logger.info("Writing structure file (.gro)...")
     gro_writer(TMP, np_xyz, inp)
 
     #######TOPOLOGY#######
     if inp.parameter_file != None:
-        #Looks for bead id of core beads bound to each other by the elastic network
         logger.info("Assigning bonds within the core...")
         core_bonds = get_core_bonds(core_xyz, inp)
-        #Looks for bead id of ligand beads bound to each other
         logger.info("Assigning bonded interactions within the ligands...")
         lig_bonds, lig_angles, lig_dihedrals = get_lig_bonded_atoms(np_xyz, lig_ndx, close_ndxs, inp)
-        #Writes top file
         logger.info("Writing topology file (.top)...")
         top_writer(TMP, np_xyz, core_bonds, lig_bonds, lig_angles, lig_dihedrals, inp, params)
 
-    #Returns the log of the job in a way that Mattia understands
     loggerFileHandler.flush()
     logger.handlers.remove(loggerFileHandler)
     loggerFileHandler.close()
 
-    #Compresses output
-    logger.info("Grouping output files...")
+    logger.info("Compressing final files...")
+
+    #files "report.log" and "NP.gro". If the user provides a parameters (.itp) file,
+    #  then the output should also contain "NP.top".
+
+    # List of files to compress to output
+    copy = ["report.log", "LIG1.mol2", "LIG2.mol2", "NP.top", "NP.gro"]
+
     zip_path = TMP + ".zip"
     zip_tmp = zipfile.ZipFile(zip_path, "w")
-    for i in os.listdir(TMP):
-        zip_tmp.write("{}/{}".format(TMP, i),"result/{}".format(i))       #Saves all the files produced into the zip file
+
+    # Saves the list of output files in zip file, including the MARTINI parameters if a top file was generated
+    if inp.parameter_file != None:
+        martini_path = "./MARTINI"
+        for _, _, fnames in os.walk(martini_path):
+            for fname in fnames:
+                zip_tmp.write("{}/{}".format(martini_path, fname), arcname="{}/MARTINI/{}".format(TMP, fname))
+
+    for i in copy:
+        target_file = os.path.join(TMP, i)
+        if not os.path.isfile(target_file):
+            logger.debug("skipping file %s", i)
+            continue
+
+        zip_tmp.write("{}/{}".format(TMP, i))
+
     zip_tmp.close()
-    zf = open(zip_path, 'rb')       #Opens and reads the saved zip file
+
+    # Opens and reads the saved zip file
+    zf = open(zip_path, 'rb')
     zip_data = zf.read()
     zf.close()
 
-    #Delete the temporary folder
     logger.info("Cleaning...")
-    shutil.rmtree(TMP)
 
-    logger.info("\"Señoras y señores, bienvenidos al party, agarren a su pareja (de la cintura) y preparense porque lo que viene no esta facil, no esta facil no.\"\n\tIvy Queen.")
-    logger.info("NanoModeler terminated normally. Que gracias.")
+    try:
+        shutil.rmtree(TMP)
+    except OSError as e:
+        logger.warn("An error occuring during tmp folder cleanup (e: %s)", e.strerror)
+
+    try:
+        os.remove(zip_path)
+    except OSError as e:
+        logger.warn("An error occuring during result file cleanup (e: %s)", e.strerror)
+
+    logger.info("NanoModeler terminated normally.")
 
     return (1, zip_data)
 
+
+
 if __name__ == "__main__":
-    NanoModeler_CG(BEAD_RADIUS=0.26,
+    NanoModeler_CG(BEAD_RADIUS=1.6,
 
-    CORE_RADIUS=None,
-    CORE_METHOD="bcc",#"fcc",
-    CORE_DENSITY=1.0, #g/cm3 of the material
-    CORE_SHAPE="cylinder",
-    CORE_CYLINDER=[2.5,5],#[2.5,4], #Radius and length respectively. Only read if CORE_SHAPE is "cylinder"
-    CORE_ELLIPSE_AXIS=[],#[1.5,3,4.5], #Only read if CORE_SHAPE is "ellipsoid"
-    CORE_RECT_PRISM=[],#[2,4,6], #Only read if CORE_SHAPE is "rectangular prism"
-    CORE_ROD_PARAMS=[],#[2.5, 4], #Caps radius and cylinder length respectively. Only read if CORE_SHAPE is "rod"
-    CORE_PYRAMID=[],#[5,5], #Base edge and height respectively. Only read if CORE_SHAPE is "pyramid"
-    CORE_OCTAHEDRON_EDGE=None,#6, #Edge size of a regular octahedron. Only read if CORE_SHAPE is "octahedron"
-    CORE_BTYPE="AC",
-    CORE_EN=True,
-    CORE_EN_K=1.0,
+    CORE_RADIUS=4,
+    CORE_METHOD="fcc", # "fcc", #"fcc",
+    CORE_DENSITY=20, #19.3 g/cm3 of the material
+    CORE_SHAPE="sphere",
+    CORE_CYLINDER=[], # [2.5,4], #Radius and length respectively. Only read if CORE_SHAPE is "cylinder"
+    CORE_ELLIPSE_AXIS=[], # [1.5,3,4.5], #Only read if CORE_SHAPE is "ellipsoid"
+    CORE_RECT_PRISM=[], # [3,5,7], #Only read if CORE_SHAPE is "rectangular prism"
+    CORE_ROD_PARAMS=[], # [2.5, 4], #Caps radius and cylinder length respectively. Only read if CORE_SHAPE is "rod"
+    CORE_PYRAMID=[], # [5,5], #Base edge and height respectively. Only read if CORE_SHAPE is "pyramid"
+    CORE_OCTAHEDRON_EDGE=None, # 6, #Edge size of a regular octahedron. Only read if CORE_SHAPE is "octahedron"
+    CORE_BTYPE="C5",
+    CORE_EN=False,
+    CORE_EN_K=None ,#5000,
 
-    GRAFT_DENSITY=1.0, #0.152, #0.216nm2 thiol-1
+    GRAFT_DENSITY=0.3, #0.152, #0.216nm2 thiol-1
 
-    LIG1_N_PER_BEAD=[19],
-    LIG1_BTYPES=['ACD'],
-    LIG1_CHARGES=[100],
-    LIG1_MASSES=[10.0],
-    LIG1_FRAC=1.0, #1.0,
+    LIG1_N_PER_BEAD=[1],
+    LIG1_BTYPES=["C1"],
+    LIG1_CHARGES=[1],
+    LIG1_MASSES=[3],
+    LIG1_FRAC=1,
 
-    LIG2_N_PER_BEAD=[],#[9, 1],
-    LIG2_BTYPES=[],#,["EO", "SP2"],
-    LIG2_CHARGES=[],#[0,0],
-    LIG2_MASSES=[],#[44, 31],
+    LIG2_N_PER_BEAD=[], # [3],
+    LIG2_BTYPES=[], # ["C1"],
+    LIG2_CHARGES=[], # [0],
+    LIG2_MASSES=[], # [56],
 
-    MORPHOLOGY=None,#random, janus_x, janus_y, janus_z, stripe_x, stripe_y, stripe_z
-    RSEED=None, #1,# None
-    STRIPES=None,
+    MORPHOLOGY=None, # 'stripe_y', #random, janus_x, janus_y, janus_z, stripe_x, stripe_y, stripe_z
+    RSEED=None, # 666,# None
+    STRIPES=None, # 4,
 
-    PARAMETER_FILE=open('./ALK.itp', 'r'))
+    PARAMETER_FILE= None  # open('test_params.itp', 'r')
+    )

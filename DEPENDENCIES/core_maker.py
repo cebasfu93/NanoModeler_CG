@@ -91,6 +91,7 @@ def pyramid(block, inp):
         cond = np.dot(coef[:3], block.T) <= coef[3]
         conditions.append(cond)
 
+
     conditions = np.array(conditions)
     condition = np.all(conditions, axis=0)
     core = block[condition]
@@ -173,7 +174,9 @@ def shell(block, inp):
         elif inp.core_radius > 1.5:
             trial_areas = np.linspace(a_ini/(inp.core_radius**2), a_ini*(inp.core_radius**2), 300)
         else:
-            logger.error("Unsupported combination of build-mode and nanoparticle radius")
+            err_txt = "Unsupported combination of build-mode and nanoparticle radius"
+            raise Exception(err_txt)
+
         diff = 1
 
         for area in trial_areas:
